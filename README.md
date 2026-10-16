@@ -35,11 +35,13 @@ Simple website connecting tutors (mainly in Zimbabwe) with diaspora parents abro
    npm run dev
    ```
 
-5. **Email OTP sign-in**
+5. **Email and password sign-up**
    - Authentication → Providers → Email: enabled. Leave phone disabled.
+   - Turn on email confirmations so a new account must confirm before logging in.
    - Authentication → URL configuration: add `http://localhost:3000/auth/callback` (and your live `/auth/callback` URL).
-   - Authentication → Email Templates → Magic Link: include `{{ .Token }}` so the email shows the 6-digit code, and keep the confirmation link.
-   - Sign-in is at `/login`. Tutors continue to `/become-tutor`. Parents continue to `/tutors`.
+   - Parents sign up at `/parent-signup`. Tutors sign up at `/tutor-signup`. Both pages ask for email and password.
+   - Sign-in is at `/login` and asks for email and password for parents and tutors.
+   - After a tutor confirms their email and logs in, they continue to `/become-tutor` to create a profile. Parents continue to `/tutors`.
    - A tutor profile is inserted with `user_id = auth.uid()`. Bookings require a signed-in user. If you already ran an older schema, run `supabase/schema.sql` again or replace the bookings insert policy with "Signed-in users can create bookings".
 
 6. **Deploy**

@@ -330,7 +330,7 @@ update public.tutors set whatsapp = null where whatsapp is not null;
 
 revoke select (whatsapp) on public.tutors from anon, authenticated, public;
 
-alter table public.bookings add column if not exists parent_user_id uuid references auth.users(id);
+alter table public.bookings add column if not exists parent_user_id uuid references auth.users(id) on delete cascade;
 alter table public.bookings add column if not exists parent_phone text;
 alter table public.bookings alter column status set default 'pending';
 
@@ -444,3 +444,57 @@ revoke all on function public.accept_booking(uuid) from public, anon;
 revoke all on function public.booking_whatsapp_link(uuid) from public, anon;
 grant execute on function public.accept_booking(uuid) to authenticated;
 grant execute on function public.booking_whatsapp_link(uuid) to authenticated;
+
+-- Delete account. Safe to run again in the Supabase SQL editor.
+-- Removes the signed-in parent or tutor login, and rows tied to that login.
+
+do $$
+declare
+  constraint_name text;
+begin
+  for constraint_name in
+    select con.conname
+    from pg_constraint con
+    join pg_class rel on rel.oid = con.conrelid
+    join pg_namespace nsp on nsp.oid = rel.relnamespace
+    join pg_attribute att on att.attrelid = rel.oid and att.attnum = any (con.conkey)
+    where nsp.nspname = 'public'
+      and rel.relname = 'bookings'
+      and att.attname = 'parent_user_id'
+      and con.contype = 'f'
+  loop
+    execute format('alter table public.bookings drop constraint %I', constraint_name);
+  end loop;
+end $$;
+
+alter table public.bookings
+  add constraint bookings_parent_user_id_fkey
+  foreign key (parent_user_id) references auth.users(id) on delete cascade;
+
+create or replace function public.delete_own_account()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Sign in required';
+  end if;
+
+  -- Photo and video files sit outside the tutors cascade.
+  begin
+    delete from storage.objects
+    where bucket_id in ('tutor-photos', 'tutor-videos')
+      and (storage.foldername(name))[1] = auth.uid()::text;
+  exception
+    when others then
+      null;
+  end;
+
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+revoke all on function public.delete_own_account() from public, anon;
+grant execute on function public.delete_own_account() to authenticated;

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type CSSProperties } from 'react'
+import { ImagePlus, Video } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -87,7 +88,6 @@ async function uploadTutorFile(bucket: string, userId: string, file: File, ext: 
 export default function BecomeTutorPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [authReady, setAuthReady] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [signedInEmail, setSignedInEmail] = useState<string | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -130,16 +130,17 @@ export default function BecomeTutorPage() {
     let cancelled = false
     supabase.auth.getUser().then(({ data }) => {
       if (cancelled) return
-      if (data.user) {
-        setUserId(data.user.id)
-        setSignedInEmail(data.user.email ?? null)
+      if (!data.user) {
+        router.replace('/tutor-signup?next=/become-tutor')
+        return
       }
-      setAuthReady(true)
+      setUserId(data.user.id)
+      setSignedInEmail(data.user.email ?? null)
     })
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     if (!photoFile) {
@@ -226,10 +227,9 @@ export default function BecomeTutorPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!authReady) return
     if (!userId) {
       sessionStorage.setItem(DRAFT_KEY, JSON.stringify(form))
-      router.push('/login?role=tutor&next=/become-tutor')
+      router.push('/tutor-signup?next=/become-tutor')
       return
     }
     if (videoChecking) return
@@ -310,15 +310,19 @@ export default function BecomeTutorPage() {
     }
   }
 
+  if (!userId) {
+    return (
+      <p className="max-w-2xl mx-auto px-4 py-16" style={{ color: '#111111' }}>Checking your account...</p>
+    )
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 text-zinc-900" style={{ backgroundColor: '#f7f4ea', color: '#1a1a1a' }}>
       <h1 className="text-3xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Become a Tutor</h1>
       <div className="mb-4 h-1.5 w-16 bg-zw-gold" />
       <p className="mb-6" style={{ color: '#1a1a1a' }}>Create your free profile. It will go live immediately. No ID checks. Payment will be added later.</p>
-      {signedInEmail ? (
-        <p className="text-sm mb-4" style={{ color: '#111111' }}>Signed in as {signedInEmail}</p>
-      ) : (
-        <p className="text-sm mb-4" style={{ color: '#111111' }}>When you submit, you confirm your email, then this profile is created.</p>
+      {signedInEmail && (
+        <p className="text-sm mb-4" style={{ color: '#111111' }}>Signed in as {signedInEmail}. Add your tutor details below.</p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border-t-4 border-zw-red bg-white p-6 text-zinc-900 shadow" style={{ backgroundColor: '#ffffff', color: '#111111', forcedColorAdjust: 'none' }}>
@@ -424,48 +428,62 @@ export default function BecomeTutorPage() {
           <textarea rows={4} value={form.description} onChange={e => setForm({...form, description: e.target.value})} className={fieldClass} style={lightControl} />
         </div>
 
-        <div>
-          <label htmlFor="profile-photo" className="block text-sm font-medium" style={labelStyle}>Profile photo (optional)</label>
-          <input
-            id="profile-photo"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={onPhotoChange}
-            className={fieldClass}
-            style={lightControl}
-          />
-          <p className="mt-1 text-xs" style={hintStyle}>Clear photo of your face, good lighting</p>
-          {photoPreview && (
-            <img src={photoPreview} alt="Selected profile photo" className="mt-2 h-16 w-16 rounded-full object-cover" />
-          )}
-          {photoError && <p className="mt-1 text-xs" style={{ color: '#d40000', backgroundColor: '#ffffff' }}>{photoError}</p>}
-        </div>
+        <div className="upload-grid">
+          <div>
+            <label htmlFor="profile-photo" className="upload-tile">
+              <span className="upload-thumb">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="" />
+                ) : (
+                  <>
+                    <ImagePlus className="h-8 w-8" aria-hidden="true" />
+                    <span>Upload</span>
+                  </>
+                )}
+              </span>
+              <span>
+                <span className="upload-tile-title">{photoFile ? 'Click to change photo' : 'Click to upload a photo'}</span>
+                <span className="upload-tile-hint">Optional. JPG, PNG, or WEBP. A clear photo of your face, under 5 MB.</span>
+                {photoFile && <span className="upload-tile-file">{photoFile.name}</span>}
+              </span>
+              <input
+                id="profile-photo"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={onPhotoChange}
+              />
+            </label>
+            {photoError && <p className="mt-2 text-xs" style={{ color: '#d40000', backgroundColor: '#ffffff' }}>{photoError}</p>}
+          </div>
 
-        <div>
-          <label htmlFor="intro-video" className="block text-sm font-medium" style={labelStyle}>Introduction video (optional)</label>
-          <input
-            id="intro-video"
-            type="file"
-            accept="video/mp4,video/webm,video/quicktime"
-            onChange={onVideoChange}
-            className={fieldClass}
-            style={lightControl}
-          />
-          <p className="mt-1 text-xs" style={hintStyle}>A short clip introducing yourself to parents. About 10–15 seconds.</p>
-          {videoChecking && <p className="mt-1 text-xs" style={hintStyle}>Checking the clip...</p>}
-          {videoSeconds !== null && <p className="mt-1 text-xs" style={hintStyle}>Selected clip: {videoSeconds} seconds.</p>}
-          {videoError && <p className="mt-1 text-xs" style={{ color: '#d40000', backgroundColor: '#ffffff' }}>{videoError}</p>}
+          <div>
+            <label htmlFor="intro-video" className="upload-tile">
+              <span className="upload-thumb">
+                <Video className="h-8 w-8" aria-hidden="true" />
+                <span>{videoFile ? 'Ready' : 'Upload'}</span>
+              </span>
+              <span>
+                <span className="upload-tile-title">{videoFile ? 'Click to change video' : 'Click to upload a video'}</span>
+                <span className="upload-tile-hint">Optional. MP4, WEBM, or MOV. About 10–15 seconds, 20 seconds at most.</span>
+                {videoChecking && <span className="upload-tile-file">Checking the clip...</span>}
+                {videoFile && <span className="upload-tile-file">{videoFile.name}{videoSeconds !== null ? ` · ${videoSeconds} seconds` : ''}</span>}
+              </span>
+              <input
+                id="intro-video"
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime"
+                onChange={onVideoChange}
+              />
+            </label>
+            {videoError && <p className="mt-2 text-xs" style={{ color: '#d40000', backgroundColor: '#ffffff' }}>{videoError}</p>}
+          </div>
         </div>
-
-        {!signedInEmail && authReady && (
-          <p className="text-xs" style={hintStyle}>After you confirm your email, choose the photo and video again.</p>
-        )}
 
         <p className="text-sm">A CV file upload will be added later. No ID documents are accepted.</p>
 
         {mediaError && <p className="text-sm" style={{ color: '#d40000', backgroundColor: '#ffffff' }}>{mediaError}</p>}
 
-        <button type="submit" disabled={loading || !authReady || videoChecking} className="w-full rounded-lg bg-zw-green py-3 font-medium text-white disabled:opacity-50" style={{ backgroundColor: '#006400', color: '#ffffff' }}>
+        <button type="submit" disabled={loading || videoChecking} className="w-full rounded-lg bg-zw-green py-3 font-medium text-white disabled:opacity-50" style={{ backgroundColor: '#006400', color: '#ffffff' }}>
           {loading ? 'Saving...' : 'Create Free Profile & Go Live'}
         </button>
       </form>

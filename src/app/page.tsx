@@ -45,7 +45,7 @@ export default function Home() {
                 Find a Tutor
               </Link>
               <Link
-                href="/become-tutor"
+                href="/tutor-signup"
                 className="border-2 border-white px-8 py-3 rounded-lg font-semibold text-center hover:bg-white hover:text-zw-green"
               >
                 List Yourself as a Tutor (Free)

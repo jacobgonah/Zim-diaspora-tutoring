@@ -57,7 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
                 Find Tutors
               </Link>
-              <Link href="/become-tutor" className="inline-flex items-center gap-1.5 font-bold text-zw-green" style={{ color: "#006400" }}>
+              <Link href="/tutor-signup" className="inline-flex items-center gap-1.5 font-bold text-zw-green" style={{ color: "#006400" }}>
                 <GraduationCap className="h-4 w-4 shrink-0" aria-hidden="true" />
                 Become a Tutor
               </Link>

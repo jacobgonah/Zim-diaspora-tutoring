@@ -45,7 +45,7 @@ export default function AuthCallbackPage() {
       } else {
         const { data } = await supabase.auth.getSession();
         if (!data.session) {
-          if (!cancelled) setError("This sign-in link is invalid or has expired.");
+          if (!cancelled) setError("This email link is invalid or has expired.");
           return;
         }
       }
@@ -63,10 +63,10 @@ export default function AuthCallbackPage() {
     <div className="max-w-md mx-auto px-4 py-16 text-center">
       {error ? (
         <>
-          <h1 className="text-2xl font-bold text-zw-green">Sign-in link failed</h1>
+          <h1 className="text-2xl font-bold text-zw-green">Email link failed</h1>
           <p className="mt-3 text-sm text-red-700">{error}</p>
           <Link href="/login" className="mt-6 inline-block text-zw-green hover:underline">
-            Request a new code
+            Back to log in
           </Link>
         </>
       ) : (

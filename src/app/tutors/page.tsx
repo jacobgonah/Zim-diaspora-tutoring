@@ -86,7 +86,7 @@ export default function TutorsPage() {
       ) : tutors.length === 0 ? (
         <div>
           <p style={{ color: '#3f3f46' }}>No tutors match yet. Try adjusting your filters, or check back soon.</p>
-          <Link href="/become-tutor" className="mt-4 inline-block rounded-lg px-4 py-2 font-medium" style={{ backgroundColor: '#006400', color: '#ffffff' }}>Become a Tutor</Link>
+          <Link href="/tutor-signup" className="mt-4 inline-block rounded-lg px-4 py-2 font-medium" style={{ backgroundColor: '#006400', color: '#ffffff' }}>Become a Tutor</Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
