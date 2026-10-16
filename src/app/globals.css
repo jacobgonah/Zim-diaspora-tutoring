@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f4ea;
+  --foreground: #1a1a1a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-zw-green: #006400;
+  --color-zw-gold: #ffd200;
+  --color-zw-red: #d40000;
+  --color-zw-cream: #f7f4ea;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: only light;
+  background-color: #f7f4ea;
+  color: #1a1a1a;
+}
+
+button,
+input,
+select,
+textarea,
+option,
+label {
+  color-scheme: only light;
+}
+
+label {
+  background-color: #ffffff;
+  color: #111111;
+  -webkit-text-fill-color: #111111;
+  forced-color-adjust: none;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+input,
+select,
+textarea {
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #71717a;
+  opacity: 1;
+}
+
+select option,
+select option:checked,
+select option:hover {
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+.header-login {
+  border-color: #006400;
+  background-color: #ffffff;
+  color: #006400;
+}
+
+.header-login:hover {
+  background-color: #006400;
+  color: #ffffff;
+}
