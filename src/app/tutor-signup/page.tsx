@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { AUTH_NEXT_KEY, AUTH_ROLE_KEY, destinationFor, safeNext } from '@/lib/auth-redirect'
+import { ResendConfirmation } from '@/components/ResendConfirmation'
 
 const fieldStyle = {
   backgroundColor: '#ffffff',
@@ -152,7 +153,12 @@ function TutorSignUpForm() {
       </form>
 
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
-      {message && <p className="mt-4 text-sm" style={{ color: '#111111' }}>{message}</p>}
+      {message && (
+        <>
+          <p className="mt-4 text-sm" style={{ color: '#111111' }}>{message}</p>
+          <ResendConfirmation email={email.trim()} role="tutor" />
+        </>
+      )}
       <p className="mt-4 text-sm" style={{ color: '#3f3f46' }}>
         Already have an account? <Link href={loginHref} className="underline" style={{ color: '#006400' }}>Log in</Link>
       </p>

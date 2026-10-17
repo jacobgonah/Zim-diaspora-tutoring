@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { ShowUnlessTutor } from "@/components/SiteNav";
+import { TEACHING_LEVELS } from "@/lib/teaching-levels";
 import { ZimbabweFlag } from "@/components/ZimbabweFlag";
 
 const STEPS = [
   {
     color: "border-zw-green",
-    text: "Tutors create a free profile with subjects, levels (Primary, High School, Advanced Level), and languages.",
+    text: `Tutors create a free profile with subjects, levels (${TEACHING_LEVELS.map((level) => level.label).join(", ")}), and languages.`,
   },
   {
     color: "border-zw-gold",
@@ -44,12 +46,14 @@ export default function Home() {
               >
                 Find a Tutor
               </Link>
-              <Link
-                href="/tutor-signup"
-                className="border-2 border-white px-8 py-3 rounded-lg font-semibold text-center hover:bg-white hover:text-zw-green"
-              >
-                List Yourself as a Tutor (Free)
-              </Link>
+              <ShowUnlessTutor>
+                <Link
+                  href="/tutor-signup"
+                  className="border-2 border-white px-8 py-3 rounded-lg font-semibold text-center hover:bg-white hover:text-zw-green"
+                >
+                  List Yourself as a Tutor (Free)
+                </Link>
+              </ShowUnlessTutor>
             </div>
           </div>
           <div className="flex justify-center min-w-0">

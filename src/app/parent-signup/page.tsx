@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { AUTH_NEXT_KEY, AUTH_ROLE_KEY, destinationFor, safeNext } from '@/lib/auth-redirect'
+import { ResendConfirmation } from '@/components/ResendConfirmation'
+import { useTutorSession } from '@/lib/use-tutor-session'
 
 const fieldStyle = {
   backgroundColor: '#ffffff',
@@ -36,6 +38,11 @@ function ParentSignUpForm() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const { ready: tutorReady, isTutor } = useTutorSession()
+
+  useEffect(() => {
+    if (tutorReady && isTutor) router.replace('/profile')
+  }, [tutorReady, isTutor, router])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -107,6 +114,14 @@ function ParentSignUpForm() {
     setMessage('Check your email and confirm this account. After that, log in to book a lesson.')
   }
 
+  if (!tutorReady) {
+    return <p className="max-w-md mx-auto px-4 py-16" style={{ color: '#111111' }}>Checking your account...</p>
+  }
+
+  if (isTutor) {
+    return <p className="max-w-md mx-auto px-4 py-16" style={{ color: '#111111' }}>Opening your profile...</p>
+  }
+
   return (
     <div className="max-w-md mx-auto px-4 py-10" style={{ color: '#1a1a1a' }}>
       <h1 className="text-3xl font-bold" style={{ color: '#1a1a1a' }}>Parent Sign Up</h1>
@@ -153,7 +168,12 @@ function ParentSignUpForm() {
       </form>
 
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
-      {message && <p className="mt-4 text-sm" style={{ color: '#111111' }}>{message}</p>}
+      {message && (
+        <>
+          <p className="mt-4 text-sm" style={{ color: '#111111' }}>{message}</p>
+          <ResendConfirmation email={email.trim()} role="parent" />
+        </>
+      )}
       <p className="mt-4 text-sm" style={{ color: '#3f3f46' }}>
         Already have an account? <Link href={next ? `/login?role=parent&next=${encodeURIComponent(next)}` : '/login?role=parent'} className="underline" style={{ color: '#006400' }}>Log in</Link>
       </p>

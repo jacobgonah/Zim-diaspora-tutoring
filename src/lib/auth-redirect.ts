@@ -16,5 +16,5 @@ export function safeNext(value: string | null): string | null {
 }
 
 export function destinationFor(role: AuthRole, next: string | null): string {
-  return safeNext(next) ?? (role === "tutor" ? "/become-tutor" : "/tutors");
+  return safeNext(next) ?? (role === "tutor" ? "/profile" : "/tutors");
 }

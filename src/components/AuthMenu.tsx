@@ -29,21 +29,8 @@ export function AuthMenu() {
   }
 
   return (
-    <span className="inline-flex items-center gap-3">
-      <Link href="/bookings" className="font-bold" style={{ color: "#006400" }}>
-        My bookings
-      </Link>
-      <Link href="/account" className="font-bold" style={{ color: "#006400" }}>
-        Account
-      </Link>
-      <span className="max-w-36 truncate text-zinc-500">{email}</span>
-      <button
-        type="button"
-        className="hover:text-zw-green"
-        onClick={() => supabase.auth.signOut()}
-      >
-        Log out
-      </button>
-    </span>
+    <Link href="/bookings" className="font-bold" style={{ color: "#006400" }}>
+      My bookings
+    </Link>
   );
 }

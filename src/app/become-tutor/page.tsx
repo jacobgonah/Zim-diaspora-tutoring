@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState, type CSSProperties } from 'react'
+import Link from 'next/link'
 import { ImagePlus, Video } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { supabase, PUBLIC_TUTOR_COLUMNS } from '@/lib/supabase'
+import { notifyTutorProfile } from '@/lib/use-tutor-session'
+import { TEACHING_LEVELS } from '@/lib/teaching-levels'
+import { useRouter, usePathname } from 'next/navigation'
 
-const LEVELS = ['Primary', 'High School', 'Advanced Level']
 const QUALIFICATIONS = ['Degree', 'Diploma', 'National Certificate']
 const LANG_OPTIONS = ['English', 'English and Shona', 'English and Ndebele', 'English, Shona and Ndebele']
 const fieldClass = 'w-full rounded border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder:text-zinc-600'
@@ -87,9 +89,18 @@ async function uploadTutorFile(bucket: string, userId: string, file: File, ext: 
 
 export default function BecomeTutorPage() {
   const router = useRouter()
+  const pathname = usePathname()
+  const onProfile = pathname === '/profile'
   const [loading, setLoading] = useState(false)
+  const [formReady, setFormReady] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [profileId, setProfileId] = useState<string | null>(null)
   const [signedInEmail, setSignedInEmail] = useState<string | null>(null)
+  const [firstName, setFirstName] = useState('')
+  const [accountPhone, setAccountPhone] = useState('')
+  const [savedPhotoUrl, setSavedPhotoUrl] = useState<string | null>(null)
+  const [savedVideoUrl, setSavedVideoUrl] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState('')
@@ -111,42 +122,82 @@ export default function BecomeTutorPage() {
   })
 
   useEffect(() => {
-    const raw = sessionStorage.getItem(DRAFT_KEY)
-    if (raw) {
-      try {
-        const saved = JSON.parse(raw)
-        setForm(prev => ({
-          ...prev,
-          ...saved,
-          levels: Array.isArray(saved.levels) ? saved.levels : prev.levels,
-          languages: Array.isArray(saved.languages) ? saved.languages : prev.languages,
-          qualifications: Array.isArray(saved.qualifications) ? saved.qualifications : prev.qualifications,
-        }))
-      } catch {
-        sessionStorage.removeItem(DRAFT_KEY)
-      }
-    }
-
     let cancelled = false
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       if (cancelled) return
-      if (!data.user) {
-        router.replace('/tutor-signup?next=/become-tutor')
+      const user = data.user
+      if (!user) {
+        router.replace(onProfile ? '/login?role=tutor&next=/profile' : '/tutor-signup?next=/profile')
         return
       }
-      setUserId(data.user.id)
-      setSignedInEmail(data.user.email ?? null)
+      if (!onProfile) {
+        router.replace('/profile')
+        return
+      }
+      setUserId(user.id)
+      setSignedInEmail(user.email ?? null)
+      const meta = user.user_metadata ?? {}
+      setFirstName(typeof meta.first_name === 'string' ? meta.first_name : '')
+      setAccountPhone(typeof meta.phone === 'string' ? meta.phone : '')
+
+      const { data: existing } = await supabase
+        .from('tutors')
+        .select(PUBLIC_TUTOR_COLUMNS)
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (cancelled) return
+
+      if (existing) {
+        const { data: contact } = await supabase
+          .from('tutor_contacts')
+          .select('whatsapp')
+          .eq('tutor_id', existing.id)
+          .maybeSingle()
+        if (cancelled) return
+        setProfileId(existing.id)
+        setSavedPhotoUrl(existing.photo_url ?? null)
+        setSavedVideoUrl(existing.video_url ?? null)
+        setPhotoPreview(existing.photo_url ?? null)
+        setForm({
+          title: existing.title || 'Mr',
+          surname: existing.surname || '',
+          subjects: (existing.subjects || []).join(', '),
+          levels: existing.levels || [],
+          languages: existing.languages?.length ? existing.languages : ['English'],
+          qualifications: existing.qualifications || [],
+          description: existing.description || '',
+          years_experience: existing.years_experience != null ? String(existing.years_experience) : '',
+          whatsapp: contact?.whatsapp || '',
+        })
+      } else {
+        const raw = sessionStorage.getItem(DRAFT_KEY)
+        if (raw) {
+          try {
+            const saved = JSON.parse(raw)
+            setForm(prev => ({
+              ...prev,
+              ...saved,
+              levels: Array.isArray(saved.levels) ? saved.levels : prev.levels,
+              languages: Array.isArray(saved.languages) ? saved.languages : prev.languages,
+              qualifications: Array.isArray(saved.qualifications) ? saved.qualifications : prev.qualifications,
+            }))
+          } catch {
+            sessionStorage.removeItem(DRAFT_KEY)
+          }
+        }
+        if (typeof meta.surname === 'string' && meta.surname) {
+          setForm(prev => ({ ...prev, surname: prev.surname || meta.surname }))
+        }
+      }
+      setFormReady(true)
     })
     return () => {
       cancelled = true
     }
-  }, [router])
+  }, [onProfile, router])
 
   useEffect(() => {
-    if (!photoFile) {
-      setPhotoPreview(null)
-      return
-    }
+    if (!photoFile) return
     const url = URL.createObjectURL(photoFile)
     setPhotoPreview(url)
     return () => URL.revokeObjectURL(url)
@@ -159,6 +210,7 @@ export default function BecomeTutorPage() {
     setMediaError('')
     if (!file) {
       setPhotoFile(null)
+      setPhotoPreview(savedPhotoUrl)
       return
     }
     if (!fileExt(file, PHOTO_EXT, PHOTO_BY_NAME)) {
@@ -229,7 +281,7 @@ export default function BecomeTutorPage() {
     e.preventDefault()
     if (!userId) {
       sessionStorage.setItem(DRAFT_KEY, JSON.stringify(form))
-      router.push('/tutor-signup?next=/become-tutor')
+      router.push('/tutor-signup?next=/profile')
       return
     }
     if (videoChecking) return
@@ -261,8 +313,7 @@ export default function BecomeTutorPage() {
       return
     }
 
-    const { data: created, error } = await supabase.from('tutors').insert({
-      user_id: userId,
+    const payload = {
       title: form.title,
       surname: form.surname,
       subjects: subjectsArray,
@@ -271,61 +322,138 @@ export default function BecomeTutorPage() {
       qualifications: form.qualifications,
       description: form.description,
       years_experience: form.years_experience ? parseInt(form.years_experience) : null,
-      is_live: true, // free at launch
+      is_live: true,
       ...(photo_url ? { photo_url } : {}),
       ...(video_url ? { video_url } : {}),
-    }).select('id').single()
+    }
 
-    if (!error && created && form.whatsapp.trim()) {
-      const { error: contactError } = await supabase.from('tutor_contacts').upsert({
-        tutor_id: created.id,
-        whatsapp: form.whatsapp.trim(),
-      })
-      if (contactError) {
-        setLoading(false)
-        setMediaError('Your profile is live, but the private WhatsApp number was not saved. Run the tutor_contacts section of supabase/schema.sql, then submit again.')
-        return
+    let tutorId = profileId
+    let error: { code?: string; message: string } | null = null
+    if (profileId) {
+      const updated = await supabase.from('tutors').update(payload).eq('id', profileId).eq('user_id', userId).select('id').single()
+      error = updated.error
+    } else {
+      const created = await supabase.from('tutors').insert({ user_id: userId, ...payload }).select('id').single()
+      error = created.error
+      tutorId = created.data?.id ?? null
+    }
+
+    if (error?.code === '23505') {
+      const { data: existing } = await supabase.from('tutors').select('id').eq('user_id', userId).maybeSingle()
+      if (existing) {
+        tutorId = existing.id
+        const updated = await supabase.from('tutors').update(payload).eq('id', existing.id).eq('user_id', userId).select('id').single()
+        error = updated.error
       }
     }
 
-    if (error?.code === '23505' && form.whatsapp.trim()) {
-      const { data: existing } = await supabase.from('tutors').select('id').eq('user_id', userId).single()
-      if (existing) {
-        await supabase.from('tutor_contacts').upsert({
-          tutor_id: existing.id,
+    if (!error && tutorId) {
+      if (form.whatsapp.trim()) {
+        const { error: contactError } = await supabase.from('tutor_contacts').upsert({
+          tutor_id: tutorId,
           whatsapp: form.whatsapp.trim(),
         })
+        if (contactError) {
+          setProfileId(tutorId)
+          setLoading(false)
+          setMediaError('Your profile was saved, but the private WhatsApp number was not. Run the tutor_contacts section of supabase/schema.sql, then save again.')
+          return
+        }
+      } else {
+        const { error: deleteError } = await supabase.from('tutor_contacts').delete().eq('tutor_id', tutorId)
+        if (deleteError) {
+          setProfileId(tutorId)
+          setLoading(false)
+          setMediaError('Your profile was saved, but the private WhatsApp number could not be removed. Run the tutor_contacts section of supabase/schema.sql, then save again.')
+          return
+        }
+      }
+    }
+
+    if (!error) {
+      const { error: accountError } = await supabase.auth.updateUser({
+        data: {
+          role: 'tutor',
+          first_name: firstName.trim(),
+          surname: form.surname.trim(),
+          phone: accountPhone.trim(),
+        },
+      })
+      if (accountError) {
+        if (tutorId) setProfileId(tutorId)
+        setLoading(false)
+        setMediaError('Your tutor listing was saved, but your name and phone were not updated. Save again.')
+        notifyTutorProfile()
+        return
       }
     }
 
     setLoading(false)
     if (error) {
-      const alreadyExists = error.code === '23505'
-      alert(alreadyExists ? 'You already have a tutor profile.' : 'Error creating profile: ' + error.message)
-      if (alreadyExists) router.push('/tutors')
-    } else {
-      sessionStorage.removeItem(DRAFT_KEY)
-      alert('Profile created and live! Booking requests appear under My bookings.')
-      router.push('/tutors')
+      setMediaError('Error saving profile: ' + error.message)
+      return
     }
+    if (tutorId) setProfileId(tutorId)
+    if (photo_url) setSavedPhotoUrl(photo_url)
+    if (video_url) setSavedVideoUrl(video_url)
+    setPhotoFile(null)
+    setVideoFile(null)
+    sessionStorage.removeItem(DRAFT_KEY)
+    setNotice('Profile saved.')
+    notifyTutorProfile()
   }
 
-  if (!userId) {
+  if (!onProfile || !userId || !formReady) {
     return (
       <p className="max-w-2xl mx-auto px-4 py-16" style={{ color: '#111111' }}>Checking your account...</p>
     )
   }
 
+  const displayName = [form.title, firstName, form.surname].filter(Boolean).join(' ')
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 text-zinc-900" style={{ backgroundColor: '#f7f4ea', color: '#1a1a1a' }}>
-      <h1 className="text-3xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Become a Tutor</h1>
+      <h1 className="text-3xl font-bold mb-2" style={{ color: '#1a1a1a' }}>My profile</h1>
       <div className="mb-4 h-1.5 w-16 bg-zw-gold" />
-      <p className="mb-6" style={{ color: '#1a1a1a' }}>Create your free profile. It will go live immediately. No ID checks. Payment will be added later.</p>
-      {signedInEmail && (
-        <p className="text-sm mb-4" style={{ color: '#111111' }}>Signed in as {signedInEmail}. Add your tutor details below.</p>
-      )}
+      <p className="mb-4" style={{ color: '#1a1a1a' }}>
+        {profileId
+          ? 'Everything saved on your tutor profile is here. Change a field, or add anything that is still empty, then save.'
+          : 'Add your tutor details below. They go on your public profile as soon as you save.'}
+      </p>
+      <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+        <Link href="/bookings" className="font-bold underline" style={{ color: '#006400' }}>My bookings</Link>
+        {profileId && (
+          <Link href={`/tutors/${profileId}`} className="font-bold underline" style={{ color: '#006400' }}>View public profile</Link>
+        )}
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border-t-4 border-zw-red bg-white p-6 text-zinc-900 shadow" style={{ backgroundColor: '#ffffff', color: '#111111', forcedColorAdjust: 'none' }}>
+      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border-t-4 border-zw-green bg-white p-6 text-zinc-900 shadow" style={{ backgroundColor: '#ffffff', color: '#111111', forcedColorAdjust: 'none' }}>
+        <div className="flex items-center gap-4">
+          {photoPreview ? (
+            <img src={photoPreview} alt="" className="h-20 w-20 rounded-full object-cover" style={{ border: '3px solid #ffd200' }} />
+          ) : (
+            <div className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold" style={{ backgroundColor: '#ffd200', color: '#006400' }}>
+              {(form.surname || firstName || '?')[0]}
+            </div>
+          )}
+          <div>
+            <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>{displayName || 'Your name'}</p>
+            {signedInEmail && <p className="text-sm" style={{ color: '#3f3f46' }}>{signedInEmail}</p>}
+            {form.subjects.trim() && <p className="text-sm" style={{ color: '#111111' }}>{form.subjects}</p>}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium" style={labelStyle}>First name</label>
+            <input required value={firstName} onChange={e => setFirstName(e.target.value)} className={fieldClass} style={lightControl} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium" style={labelStyle}>Phone number (optional)</label>
+            <input type="tel" placeholder="+263..." value={accountPhone} onChange={e => setAccountPhone(e.target.value)} className={fieldClass} style={lightControl} />
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div style={{ backgroundColor: '#ffffff' }}>
             <label className="block text-sm font-medium" style={labelStyle}>Title</label>
@@ -350,18 +478,18 @@ export default function BecomeTutorPage() {
         <div>
           <label className="block text-sm font-medium" style={labelStyle}>Levels taught *</label>
           <div className="mt-1 flex flex-wrap gap-2">
-            {LEVELS.map(level => {
-              const selected = form.levels.includes(level)
+            {TEACHING_LEVELS.map(level => {
+              const selected = form.levels.includes(level.value)
               return (
                 <button
                   type="button"
-                  key={level}
+                  key={level.value}
                   aria-pressed={selected}
-                  onClick={() => toggleValue('levels', level)}
+                  onClick={() => toggleValue('levels', level.value)}
                   className="rounded border px-3 py-1"
                   style={chipStyle(selected)}
                 >
-                  {level}
+                  {level.label}
                 </button>
               )
             })}
@@ -442,7 +570,7 @@ export default function BecomeTutorPage() {
                 )}
               </span>
               <span>
-                <span className="upload-tile-title">{photoFile ? 'Click to change photo' : 'Click to upload a photo'}</span>
+                <span className="upload-tile-title">{photoFile || savedPhotoUrl ? 'Click to change photo' : 'Click to upload a photo'}</span>
                 <span className="upload-tile-hint">Optional. JPG, PNG, or WEBP. A clear photo of your face, under 5 MB.</span>
                 {photoFile && <span className="upload-tile-file">{photoFile.name}</span>}
               </span>
@@ -460,10 +588,10 @@ export default function BecomeTutorPage() {
             <label htmlFor="intro-video" className="upload-tile">
               <span className="upload-thumb">
                 <Video className="h-8 w-8" aria-hidden="true" />
-                <span>{videoFile ? 'Ready' : 'Upload'}</span>
+                <span>{videoFile || savedVideoUrl ? 'Ready' : 'Upload'}</span>
               </span>
               <span>
-                <span className="upload-tile-title">{videoFile ? 'Click to change video' : 'Click to upload a video'}</span>
+                <span className="upload-tile-title">{videoFile || savedVideoUrl ? 'Click to change video' : 'Click to upload a video'}</span>
                 <span className="upload-tile-hint">Optional. MP4, WEBM, or MOV. About 10–15 seconds, 20 seconds at most.</span>
                 {videoChecking && <span className="upload-tile-file">Checking the clip...</span>}
                 {videoFile && <span className="upload-tile-file">{videoFile.name}{videoSeconds !== null ? ` · ${videoSeconds} seconds` : ''}</span>}
@@ -475,6 +603,9 @@ export default function BecomeTutorPage() {
                 onChange={onVideoChange}
               />
             </label>
+            {savedVideoUrl && !videoFile && (
+              <video controls playsInline preload="metadata" src={savedVideoUrl} className="mt-2 w-full rounded-lg bg-black" />
+            )}
             {videoError && <p className="mt-2 text-xs" style={{ color: '#d40000', backgroundColor: '#ffffff' }}>{videoError}</p>}
           </div>
         </div>
@@ -484,9 +615,10 @@ export default function BecomeTutorPage() {
         {mediaError && <p className="text-sm" style={{ color: '#d40000', backgroundColor: '#ffffff' }}>{mediaError}</p>}
 
         <button type="submit" disabled={loading || videoChecking} className="w-full rounded-lg bg-zw-green py-3 font-medium text-white disabled:opacity-50" style={{ backgroundColor: '#006400', color: '#ffffff' }}>
-          {loading ? 'Saving...' : 'Create Free Profile & Go Live'}
+          {loading ? 'Saving...' : 'Save profile'}
         </button>
       </form>
+      {notice && <p className="mt-4 text-sm" style={{ color: '#111111' }}>{notice}</p>}
     </div>
   )
 }

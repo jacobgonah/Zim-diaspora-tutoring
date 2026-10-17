@@ -1,4 +1,5 @@
 import { supabase, PUBLIC_TUTOR_COLUMNS } from '@/lib/supabase'
+import { teachingLevelLabel } from '@/lib/teaching-levels'
 import { TutorPhoto } from '@/components/TutorPhoto'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -30,7 +31,7 @@ export default async function TutorProfile({ params }: { params: Promise<{ id: s
           />
           <div>
             <h1 className="text-2xl font-bold">{tutor.title} {tutor.surname}</h1>
-            <p className="text-zinc-500">{tutor.levels.join(' • ')}</p>
+            <p className="text-zinc-500">{tutor.levels.map(teachingLevelLabel).join(' • ')}</p>
             {tutor.years_experience && <p className="text-sm">{tutor.years_experience} years experience</p>}
             {tutor.no_show_count > 0 && (
               <p className="text-red-600 text-sm mt-1">Reported no-shows: {tutor.no_show_count}</p>

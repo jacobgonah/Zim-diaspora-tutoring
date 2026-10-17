@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
-import { GraduationCap, Search, UserPlus } from "lucide-react";
-import { AuthMenu } from "@/components/AuthMenu";
+import { AccountMenu } from "@/components/AccountMenu";
+import { SiteNav } from "@/components/SiteNav";
 import { FlagStripes } from "@/components/FlagStripes";
 import { ZimbabweFlag } from "@/components/ZimbabweFlag";
 
@@ -41,32 +41,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <header className="bg-white text-zinc-900 shadow-sm" style={{ backgroundColor: "#ffffff", color: "#1a1a1a" }}>
           <FlagStripes className="h-2.5" />
           <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Link href="/" className="flex items-center gap-3 min-w-0">
-              <ZimbabweFlag className="h-10 w-20 shrink-0 rounded-sm shadow-sm ring-1 ring-black/15" />
-              <span className={`${poppins.className} text-lg sm:text-xl text-zw-green leading-tight`} style={{ color: "#006400", fontWeight: 600 }}>
-                Zim Diaspora Tutoring
-              </span>
-              <img
-                src="/zdt-logo.png"
-                alt="ZDT"
-                className="h-11 w-auto shrink-0"
-              />
-            </Link>
-            <nav className="flex flex-wrap items-center gap-x-8 gap-y-3 text-sm">
-              <Link href="/tutors" className="inline-flex items-center gap-1.5 font-bold text-zw-green" style={{ color: "#006400" }}>
-                <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Find Tutors
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <AccountMenu />
+              <Link href="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <ZimbabweFlag className="h-8 w-16 shrink-0 rounded-sm shadow-sm ring-1 ring-black/15 sm:h-10 sm:w-20" />
+                <span className={`${poppins.className} min-w-0 truncate text-base sm:text-xl text-zw-green leading-tight`} style={{ color: "#006400", fontWeight: 600 }}>
+                  Zim Diaspora Tutoring
+                </span>
+                <img
+                  src="/zdt-logo.png"
+                  alt="ZDT"
+                  className="hidden h-11 w-auto shrink-0 sm:block"
+                />
               </Link>
-              <Link href="/tutor-signup" className="inline-flex items-center gap-1.5 font-bold text-zw-green" style={{ color: "#006400" }}>
-                <GraduationCap className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Become a Tutor
-              </Link>
-              <Link href="/parent-signup" className="inline-flex items-center gap-1.5 font-bold text-zw-green" style={{ color: "#006400" }}>
-                <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Parent Sign Up
-              </Link>
-              <AuthMenu />
-            </nav>
+            </div>
+            <SiteNav />
           </div>
         </header>
         <main className="flex-1" style={{ backgroundColor: "#f7f4ea", color: "#1a1a1a" }}>{children}</main>

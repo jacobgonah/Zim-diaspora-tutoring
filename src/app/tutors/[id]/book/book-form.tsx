@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTutorSession } from '@/lib/use-tutor-session'
 
 const fieldStyle = {
   backgroundColor: '#ffffff',
@@ -24,6 +25,7 @@ const labelStyle = {
 
 export default function BookForm({ tutorId }: { tutorId: string }) {
   const router = useRouter()
+  const { ready: viewerReady, isTutor } = useTutorSession()
   const [loading, setLoading] = useState(false)
   const [ready, setReady] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
@@ -161,7 +163,10 @@ export default function BookForm({ tutorId }: { tutorId: string }) {
         </button>
       </form>
       <p className="text-xs mt-4" style={{ color: '#3f3f46' }}>
-        The lesson and payment happen off this site. <Link href="/parent-signup" className="underline" style={{ color: '#006400' }}>Parent Sign Up</Link> collects your phone earlier if you prefer.
+        The lesson and payment happen off this site.
+        {viewerReady && !isTutor && (
+          <> <Link href="/parent-signup" className="underline" style={{ color: '#006400' }}>Parent Sign Up</Link> collects your phone earlier if you prefer.</>
+        )}
       </p>
     </div>
   )

@@ -4,8 +4,8 @@ import { useState, useEffect, type CSSProperties } from 'react'
 import { supabase, PUBLIC_TUTOR_COLUMNS, type Tutor } from '@/lib/supabase'
 import { TutorPhoto } from '@/components/TutorPhoto'
 import Link from 'next/link'
-
-const LEVELS = ['Primary', 'High School', 'Advanced Level']
+import { useTutorSession } from '@/lib/use-tutor-session'
+import { TEACHING_LEVELS, teachingLevelLabel } from '@/lib/teaching-levels'
 const LANGUAGES = ['English', 'English and Shona', 'English and Ndebele', 'English, Shona and Ndebele']
 const lightControl: CSSProperties = { backgroundColor: '#ffffff', color: '#111111', WebkitTextFillColor: '#111111', forcedColorAdjust: 'none', colorScheme: 'light only' }
 const labelStyle: CSSProperties = { display: 'block', marginBottom: '4px', backgroundColor: '#ffffff', color: '#111111', WebkitTextFillColor: '#111111', forcedColorAdjust: 'none', colorScheme: 'light only' }
@@ -17,6 +17,7 @@ export default function TutorsPage() {
   const [subject, setSubject] = useState('')
   const [level, setLevel] = useState('')
   const [language, setLanguage] = useState('')
+  const { ready: viewerReady, isTutor } = useTutorSession()
 
   useEffect(() => {
     fetchTutors()
@@ -67,7 +68,7 @@ export default function TutorsPage() {
           <label className="block text-sm font-medium mb-1" style={labelStyle}>Level</label>
           <select value={level} onChange={(e) => setLevel(e.target.value)} className="w-full border border-zinc-300 rounded px-3 py-2 bg-white text-zinc-900" style={lightControl}>
             <option value="">Any</option>
-            {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+            {TEACHING_LEVELS.map(level => <option key={level.value} value={level.value}>{level.label}</option>)}
           </select>
         </div>
         <div style={{ backgroundColor: '#ffffff' }}>
@@ -86,7 +87,9 @@ export default function TutorsPage() {
       ) : tutors.length === 0 ? (
         <div>
           <p style={{ color: '#3f3f46' }}>No tutors match yet. Try adjusting your filters, or check back soon.</p>
-          <Link href="/tutor-signup" className="mt-4 inline-block rounded-lg px-4 py-2 font-medium" style={{ backgroundColor: '#006400', color: '#ffffff' }}>Become a Tutor</Link>
+          {viewerReady && !isTutor && (
+            <Link href="/tutor-signup" className="mt-4 inline-block rounded-lg px-4 py-2 font-medium" style={{ backgroundColor: '#006400', color: '#ffffff' }}>Become a Tutor</Link>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -101,7 +104,7 @@ export default function TutorsPage() {
                 />
                 <div>
                   <h3 className="font-semibold" style={{ color: '#1a1a1a' }}>{[tutor.title, tutor.surname].filter(Boolean).join(' ')}</h3>
-                  <p className="text-sm text-zinc-500">{tutor.levels.join(', ')}</p>
+                  <p className="text-sm text-zinc-500">{tutor.levels.map(teachingLevelLabel).join(', ')}</p>
                   <p className="text-sm mt-1">{tutor.subjects.slice(0, 3).join(', ')}{tutor.subjects.length > 3 ? '...' : ''}</p>
                   <p className="text-xs text-zinc-400 mt-1">{tutor.languages.join(', ')}</p>
                   {tutor.no_show_count > 0 && (

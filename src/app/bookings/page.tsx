@@ -25,6 +25,7 @@ export default function BookingsPage() {
   const [ready, setReady] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [tutorId, setTutorId] = useState<string | null>(null)
+  const [viewerIsTutor, setViewerIsTutor] = useState(false)
   const [rows, setRows] = useState<BookingRow[]>([])
   const [links, setLinks] = useState<Record<string, string | null>>({})
   const [error, setError] = useState<string | null>(null)
@@ -41,7 +42,10 @@ export default function BookingsPage() {
       }
       setUserId(user.id)
       const { data: tutor } = await supabase.from('tutors').select('id').eq('user_id', user.id).maybeSingle()
-      if (!cancelled) setTutorId(tutor?.id ?? null)
+      if (!cancelled) {
+        setTutorId(tutor?.id ?? null)
+        setViewerIsTutor(user.user_metadata?.role === 'tutor' || !!tutor)
+      }
       const { data: bookings, error: loadError } = await supabase
         .from('bookings')
         .select('id, tutor_id, parent_user_id, parent_name, slot_date, start_time, is_recurring, status, tutors(title, surname)')
@@ -137,7 +141,7 @@ export default function BookingsPage() {
       <section>
         <h2 className="text-xl font-semibold mb-3" style={{ color: '#1a1a1a' }}>Your lesson requests</h2>
         {outgoing.length === 0 ? (
-          <p style={{ color: '#3f3f46' }}>You have not requested a lesson yet. <Link href="/tutors" className="underline" style={{ color: '#006400' }}>Find Tutors</Link></p>
+          <p style={{ color: '#3f3f46' }}>You have not requested a lesson yet. <Link href="/tutors" className="underline" style={{ color: '#006400' }}>{viewerIsTutor ? 'Tutors' : 'Find Tutors'}</Link></p>
         ) : (
           <ul className="space-y-3">
             {outgoing.map((row) => {

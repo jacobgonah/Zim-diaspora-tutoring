@@ -10,7 +10,7 @@ create table if not exists public.tutors (
   title text, -- Mr, Ms, etc.
   surname text not null,
   subjects text[] not null default '{}',
-  levels text[] not null default '{}', -- Primary, High School, Advanced Level
+  levels text[] not null default '{}', -- Primary, Secondary, High School, Advanced Level
   languages text[] not null default '{}', -- must include English
   qualifications text[] not null default '{}', -- Degree, Diploma, National Certificate
   description text,
@@ -498,3 +498,15 @@ $$;
 
 revoke all on function public.delete_own_account() from public, anon;
 grant execute on function public.delete_own_account() to authenticated;
+
+drop policy if exists "Tutor deletes own whatsapp" on public.tutor_contacts;
+create policy "Tutor deletes own whatsapp"
+  on public.tutor_contacts for delete
+  to authenticated
+  using (
+    exists (
+      select 1 from public.tutors t
+      where t.id = tutor_contacts.tutor_id
+        and t.user_id = auth.uid()
+    )
+  );
