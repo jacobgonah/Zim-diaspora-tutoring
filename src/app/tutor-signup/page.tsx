@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { AUTH_NEXT_KEY, AUTH_ROLE_KEY, destinationFor, safeNext } from '@/lib/auth-redirect'
+import { GENDERS, tutorGender } from '@/lib/gender'
 import { ResendConfirmation } from '@/components/ResendConfirmation'
 
 const fieldStyle = {
@@ -30,6 +31,7 @@ function TutorSignUpForm() {
   const next = safeNext(searchParams.get('next'))
   const [firstName, setFirstName] = useState('')
   const [surname, setSurname] = useState('')
+  const [gender, setGender] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [phone, setPhone] = useState('')
@@ -61,6 +63,10 @@ function TutorSignUpForm() {
       setError('Use a password of at least 8 characters.')
       return
     }
+    if (!tutorGender(gender)) {
+      setError('Choose Male or Female.')
+      return
+    }
 
     setLoading(true)
     sessionStorage.setItem(AUTH_ROLE_KEY, 'tutor')
@@ -80,6 +86,7 @@ function TutorSignUpForm() {
           role: 'tutor',
           first_name: firstName.trim(),
           surname: surname.trim(),
+          gender,
           phone: phone.trim(),
         },
       },
@@ -134,6 +141,17 @@ function TutorSignUpForm() {
           <label htmlFor="surname" style={labelStyle}>Surname</label>
           <input id="surname" required autoComplete="family-name" value={surname} onChange={(event) => setSurname(event.target.value)} className="w-full rounded border border-zinc-300 px-3 py-2" style={fieldStyle} />
         </div>
+        <fieldset>
+          <legend style={labelStyle}>Gender</legend>
+          <div className="flex gap-4">
+            {GENDERS.map((option) => (
+              <label key={option} className="flex items-center gap-2" style={{ color: '#111111', backgroundColor: '#ffffff' }}>
+                <input type="radio" name="gender" value={option} required checked={gender === option} onChange={() => setGender(option)} />
+                {option}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <div>
           <label htmlFor="email" style={labelStyle}>Email</label>
           <input id="email" type="email" required autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded border border-zinc-300 px-3 py-2" style={fieldStyle} />

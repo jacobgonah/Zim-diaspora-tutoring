@@ -1,6 +1,9 @@
-import { supabase, PUBLIC_TUTOR_COLUMNS } from '@/lib/supabase'
+import { supabase, PUBLIC_TUTOR_COLUMNS, type Tutor } from '@/lib/supabase'
 import { teachingLevelLabel } from '@/lib/teaching-levels'
 import { TutorPhoto } from '@/components/TutorPhoto'
+import { IntroVideo } from '@/components/IntroVideo'
+import { BookSlot } from '@/components/BookSlot'
+import { missingRpc } from '@/lib/media-schema'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
@@ -8,13 +11,7 @@ export const instant = false
 
 export default async function TutorProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { data: tutor } = await supabase
-    .from('tutors')
-    .select(PUBLIC_TUTOR_COLUMNS)
-    .eq('id', id)
-    .eq('is_live', true)
-    .single()
-
+  const tutor = await loadPublicTutor(id)
   if (!tutor) notFound()
 
   return (
@@ -25,6 +22,7 @@ export default async function TutorProfile({ params }: { params: Promise<{ id: s
         <div className="flex items-start gap-4">
           <TutorPhoto
             photoUrl={tutor.photo_url}
+            gender={tutor.gender}
             initial={tutor.surname?.[0] || '?'}
             alt=""
             className="h-24 w-24 shrink-0 rounded-full text-3xl"
@@ -46,12 +44,13 @@ export default async function TutorProfile({ params }: { params: Promise<{ id: s
           </div>
           <div>
             <h2 className="font-semibold">Languages</h2>
-            <p>{tutor.languages.join(', ')}</p>
+            <p>{(tutor.languages || []).join(', ')}</p>
           </div>
-          {tutor.qualifications && tutor.qualifications.length > 0 && (
+          {(tutor.qualifications && tutor.qualifications.length > 0 || tutor.qualification_detail) && (
             <div>
               <h2 className="font-semibold">Held qualifications</h2>
-              <p>{tutor.qualifications.join(', ')}</p>
+              {tutor.qualifications && tutor.qualifications.length > 0 && <p>{tutor.qualifications.join(', ')}</p>}
+              {tutor.qualification_detail && <p>{tutor.qualification_detail}</p>}
             </div>
           )}
           {tutor.description && (
@@ -63,21 +62,10 @@ export default async function TutorProfile({ params }: { params: Promise<{ id: s
           {tutor.video_url && (
             <div>
               <h2 className="font-semibold">Introduction</h2>
-              <video
-                controls
-                playsInline
-                preload="metadata"
-                src={tutor.video_url}
-                className="mt-2 w-full max-w-md rounded-lg bg-black"
-              />
+              <IntroVideo src={tutor.video_url} />
             </div>
           )}
-          <a
-            href={`/tutors/${tutor.id}/book`}
-            className="inline-block bg-zw-gold text-black px-6 py-2 rounded-lg font-medium"
-          >
-            Book a Time Slot
-          </a>
+          <BookSlot tutorId={tutor.id} />
         </div>
 
         <div className="mt-8 p-4 bg-zw-cream rounded text-sm border-l-4 border-zw-red">
@@ -87,4 +75,33 @@ export default async function TutorProfile({ params }: { params: Promise<{ id: s
       </div>
     </div>
   )
+}
+
+async function loadPublicTutor(id: string): Promise<Tutor | null> {
+  const rpc = await supabase.rpc('get_tutor', { p_id: id })
+  if (!rpc.error) return tutorRecord(rpc.data)
+  if (!missingRpc(rpc.error.message)) return null
+  const fallback = await supabase
+    .from('tutors')
+    .select(PUBLIC_TUTOR_COLUMNS)
+    .eq('id', id)
+    .eq('is_live', true)
+    .maybeSingle()
+  return fallback.data
+}
+
+function tutorRecord(data: unknown): Tutor | null {
+  const value = typeof data === 'string' ? parseJson(data) : data
+  if (!value || typeof value !== 'object') return null
+  const row = value as Tutor
+  if (typeof row.id !== 'string' || typeof row.surname !== 'string' || !Array.isArray(row.subjects) || !Array.isArray(row.levels)) return null
+  return row
+}
+
+function parseJson(value: string) {
+  try {
+    return JSON.parse(value) as unknown
+  } catch {
+    return null
+  }
 }

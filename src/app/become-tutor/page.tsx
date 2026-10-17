@@ -2,13 +2,17 @@
 
 import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
-import { ImagePlus, Video } from 'lucide-react'
-import { supabase, PUBLIC_TUTOR_COLUMNS } from '@/lib/supabase'
+import { File, ImagePlus, Video } from 'lucide-react'
+import { supabase, EDITOR_TUTOR_COLUMNS, PUBLIC_TUTOR_COLUMNS } from '@/lib/supabase'
 import { notifyTutorProfile } from '@/lib/use-tutor-session'
 import { TEACHING_LEVELS } from '@/lib/teaching-levels'
+import { GENDERS, tutorGender } from '@/lib/gender'
+import { qualificationChoices } from '@/lib/qualifications'
+import { preparePortraitVideo } from '@/lib/portrait-video'
+import { MEDIA_SCHEMA_HINT, mediaStatusNote, previewStoredMedia } from '@/lib/stored-media'
+import { missingColumn, missingRpc } from '@/lib/media-schema'
+import { TutorPhoto } from '@/components/TutorPhoto'
 import { useRouter, usePathname } from 'next/navigation'
-
-const QUALIFICATIONS = ['Degree', 'Diploma', 'National Certificate']
 const LANG_OPTIONS = ['English', 'English and Shona', 'English and Ndebele', 'English, Shona and Ndebele']
 const fieldClass = 'w-full rounded border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder:text-zinc-600'
 const lightControl: CSSProperties = { backgroundColor: '#ffffff', color: '#111111', borderColor: '#d4d4d8', WebkitTextFillColor: '#111111', forcedColorAdjust: 'none', colorScheme: 'light only' }
@@ -46,25 +50,6 @@ function fileExt(file: File, byType: Record<string, string>, byName: Record<stri
 }
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024
 const MAX_VIDEO_BYTES = 20 * 1024 * 1024
-const MAX_VIDEO_SECONDS = 20
-
-function readVideoDuration(file: File): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const video = document.createElement('video')
-    video.preload = 'metadata'
-    video.onloadedmetadata = () => {
-      const duration = video.duration
-      URL.revokeObjectURL(url)
-      resolve(duration)
-    }
-    video.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('unreadable'))
-    }
-    video.src = url
-  })
-}
 
 function errorText(err: unknown) {
   if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
@@ -75,16 +60,62 @@ function errorText(err: unknown) {
 }
 
 async function uploadTutorFile(bucket: string, userId: string, file: File, ext: string) {
-  const name = bucket === 'tutor-photos' ? 'photo' : 'intro'
-  const path = `${userId}/${name}.${ext}`
+  const path = `${userId}/${crypto.randomUUID()}.${ext}`
   const { error } = await supabase.storage.from(bucket).upload(path, file, {
-    upsert: true,
+    upsert: false,
     contentType: file.type || MIME_BY_EXT[ext],
     cacheControl: '3600',
   })
   if (error) throw error
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-  return `${data.publicUrl}?v=${Date.now()}`
+  return path
+}
+
+type EditorRow = {
+  id: string
+  title?: string | null
+  surname?: string | null
+  subjects?: string[] | null
+  levels?: string[] | null
+  languages?: string[] | null
+  qualifications?: string[] | null
+  qualification_detail?: string | null
+  description?: string | null
+  years_experience?: number | null
+  gender?: string | null
+  photo_url?: string | null
+  video_url?: string | null
+}
+
+type OwnerMedia = {
+  photo_path: string | null
+  photo_status: string | null
+  video_path: string | null
+  video_status: string | null
+}
+
+async function ownerDisplays(profileId: string, media: OwnerMedia) {
+  const photoDisplay = media.photo_status === 'approved'
+    ? `/media/${profileId}/photo`
+    : media.photo_path
+      ? await previewStoredMedia('tutor-photos', media.photo_path)
+      : null
+  const videoDisplay = media.video_status === 'approved'
+    ? `/media/${profileId}/video`
+    : media.video_path
+      ? await previewStoredMedia('tutor-videos', media.video_path)
+      : null
+  return { photoDisplay, videoDisplay }
+}
+
+function readMedia(value: unknown): OwnerMedia | null {
+  if (!value || typeof value !== 'object') return null
+  const media = value as Record<string, unknown>
+  return {
+    photo_path: typeof media.photo_path === 'string' ? media.photo_path : null,
+    photo_status: typeof media.photo_status === 'string' ? media.photo_status : null,
+    video_path: typeof media.video_path === 'string' ? media.video_path : null,
+    video_status: typeof media.video_status === 'string' ? media.video_status : null,
+  }
 }
 
 export default function BecomeTutorPage() {
@@ -98,24 +129,30 @@ export default function BecomeTutorPage() {
   const [signedInEmail, setSignedInEmail] = useState<string | null>(null)
   const [firstName, setFirstName] = useState('')
   const [accountPhone, setAccountPhone] = useState('')
-  const [savedPhotoUrl, setSavedPhotoUrl] = useState<string | null>(null)
-  const [savedVideoUrl, setSavedVideoUrl] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [schemaNote, setSchemaNote] = useState<string | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [storedPhotoDisplay, setStoredPhotoDisplay] = useState<string | null>(null)
+  const [photoStatus, setPhotoStatus] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState('')
   const [videoFile, setVideoFile] = useState<File | null>(null)
+  const [videoPreview, setVideoPreview] = useState<string | null>(null)
+  const [savedVideoPreview, setSavedVideoPreview] = useState<string | null>(null)
   const [videoSeconds, setVideoSeconds] = useState<number | null>(null)
+  const [videoCropped, setVideoCropped] = useState(false)
   const [videoChecking, setVideoChecking] = useState(false)
   const [videoError, setVideoError] = useState('')
+  const [videoStatus, setVideoStatus] = useState<string | null>(null)
   const [mediaError, setMediaError] = useState('')
   const [form, setForm] = useState({
     title: 'Mr',
     surname: '',
+    gender: '' as '' | 'Male' | 'Female',
     subjects: '',
     levels: [] as string[],
     languages: ['English'] as string[],
     qualifications: [] as string[],
+    qualification_detail: '',
     description: '',
     years_experience: '',
     whatsapp: '',
@@ -137,14 +174,31 @@ export default function BecomeTutorPage() {
       setUserId(user.id)
       setSignedInEmail(user.email ?? null)
       const meta = user.user_metadata ?? {}
+      const metaGender = tutorGender(meta.gender) || ''
       setFirstName(typeof meta.first_name === 'string' ? meta.first_name : '')
       setAccountPhone(typeof meta.phone === 'string' ? meta.phone : '')
 
-      const { data: existing } = await supabase
+      const primary = await supabase
         .from('tutors')
-        .select(PUBLIC_TUTOR_COLUMNS)
+        .select(EDITOR_TUTOR_COLUMNS)
         .eq('user_id', user.id)
         .maybeSingle()
+      let existing: EditorRow | null = null
+      let schemaReady = false
+      if (!primary.error) {
+        existing = primary.data
+        schemaReady = true
+      } else if (missingColumn(primary.error.message)) {
+        setSchemaNote(MEDIA_SCHEMA_HINT)
+        const fallback = await supabase
+          .from('tutors')
+          .select(PUBLIC_TUTOR_COLUMNS)
+          .eq('user_id', user.id)
+          .maybeSingle()
+        if (!fallback.error) existing = fallback.data
+      } else {
+        setSchemaNote(primary.error.message)
+      }
       if (cancelled) return
 
       if (existing) {
@@ -155,39 +209,69 @@ export default function BecomeTutorPage() {
           .maybeSingle()
         if (cancelled) return
         setProfileId(existing.id)
-        setSavedPhotoUrl(existing.photo_url ?? null)
-        setSavedVideoUrl(existing.video_url ?? null)
-        setPhotoPreview(existing.photo_url ?? null)
         setForm({
           title: existing.title || 'Mr',
           surname: existing.surname || '',
+          gender: tutorGender(existing.gender) || metaGender,
           subjects: (existing.subjects || []).join(', '),
           levels: existing.levels || [],
           languages: existing.languages?.length ? existing.languages : ['English'],
           qualifications: existing.qualifications || [],
+          qualification_detail: existing.qualification_detail || '',
           description: existing.description || '',
           years_experience: existing.years_experience != null ? String(existing.years_experience) : '',
           whatsapp: contact?.whatsapp || '',
         })
+        if (schemaReady) {
+          const mediaResult = await supabase.rpc('my_tutor_media')
+          if (cancelled) return
+          const media = mediaResult.error ? null : readMedia(mediaResult.data)
+          if (mediaResult.error && missingRpc(mediaResult.error.message)) setSchemaNote(MEDIA_SCHEMA_HINT)
+          if (media) {
+            const displays = await ownerDisplays(existing.id, media)
+            if (cancelled) return
+            setPhotoStatus(media.photo_status)
+            setVideoStatus(media.video_status)
+            setStoredPhotoDisplay(displays.photoDisplay)
+            setSavedVideoPreview(displays.videoDisplay)
+          }
+        } else {
+          if (existing.photo_url) {
+            setPhotoStatus('approved')
+            setStoredPhotoDisplay(existing.photo_url)
+          }
+          if (existing.video_url) {
+            setVideoStatus('approved')
+            setSavedVideoPreview(existing.video_url)
+          }
+        }
       } else {
         const raw = sessionStorage.getItem(DRAFT_KEY)
+        let draft: Record<string, unknown> = {}
         if (raw) {
           try {
-            const saved = JSON.parse(raw)
-            setForm(prev => ({
-              ...prev,
-              ...saved,
-              levels: Array.isArray(saved.levels) ? saved.levels : prev.levels,
-              languages: Array.isArray(saved.languages) ? saved.languages : prev.languages,
-              qualifications: Array.isArray(saved.qualifications) ? saved.qualifications : prev.qualifications,
-            }))
+            draft = JSON.parse(raw) as Record<string, unknown>
           } catch {
             sessionStorage.removeItem(DRAFT_KEY)
           }
         }
-        if (typeof meta.surname === 'string' && meta.surname) {
-          setForm(prev => ({ ...prev, surname: prev.surname || meta.surname }))
-        }
+        const text = (value: unknown, fallback: string) => typeof value === 'string' ? value : fallback
+        const list = (value: unknown, fallback: string[]) => Array.isArray(value)
+          ? value.filter((item): item is string => typeof item === 'string')
+          : fallback
+        setForm(prev => ({
+          title: text(draft.title, prev.title),
+          surname: text(draft.surname, '') || prev.surname || (typeof meta.surname === 'string' ? meta.surname : ''),
+          gender: tutorGender(draft.gender) || metaGender || prev.gender,
+          subjects: text(draft.subjects, prev.subjects),
+          levels: list(draft.levels, prev.levels),
+          languages: list(draft.languages, prev.languages),
+          qualifications: list(draft.qualifications, prev.qualifications),
+          qualification_detail: text(draft.qualification_detail, prev.qualification_detail),
+          description: text(draft.description, prev.description),
+          years_experience: text(draft.years_experience, prev.years_experience),
+          whatsapp: text(draft.whatsapp, prev.whatsapp),
+        }))
       }
       setFormReady(true)
     })
@@ -196,13 +280,6 @@ export default function BecomeTutorPage() {
     }
   }, [onProfile, router])
 
-  useEffect(() => {
-    if (!photoFile) return
-    const url = URL.createObjectURL(photoFile)
-    setPhotoPreview(url)
-    return () => URL.revokeObjectURL(url)
-  }, [photoFile])
-
   function onPhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
     const input = event.target
     const file = input.files?.[0]
@@ -210,7 +287,6 @@ export default function BecomeTutorPage() {
     setMediaError('')
     if (!file) {
       setPhotoFile(null)
-      setPhotoPreview(savedPhotoUrl)
       return
     }
     if (!fileExt(file, PHOTO_EXT, PHOTO_BY_NAME)) {
@@ -252,17 +328,21 @@ export default function BecomeTutorPage() {
     }
     setVideoChecking(true)
     try {
-      const duration = await readVideoDuration(file)
-      if (Number.isFinite(duration) && duration > MAX_VIDEO_SECONDS) {
-        input.value = ''
-        setVideoFile(null)
-        setVideoError('Use a clip of about 10–15 seconds (20 seconds at most).')
-        return
-      }
-      setVideoFile(file)
-      if (Number.isFinite(duration)) setVideoSeconds(Math.round(duration))
-    } catch {
-      setVideoFile(file)
+      const prepared = await preparePortraitVideo(file)
+      const url = URL.createObjectURL(prepared.file)
+      setVideoPreview((current) => {
+        if (current?.startsWith('blob:')) URL.revokeObjectURL(current)
+        return url
+      })
+      setVideoFile(prepared.file)
+      setVideoSeconds(prepared.seconds)
+      setVideoCropped(prepared.cropped)
+    } catch (error) {
+      input.value = ''
+      setVideoFile(null)
+      setVideoCropped(false)
+      const message = error instanceof Error ? error.message : ''
+      setVideoError(message === 'unreadable' ? 'Use an MP4, WEBM, or MOV clip.' : message || 'Use a vertical 9:16 video, filmed with your phone held upright.')
     } finally {
       setVideoChecking(false)
     }
@@ -285,6 +365,10 @@ export default function BecomeTutorPage() {
       return
     }
     if (videoChecking) return
+    if (form.gender !== 'Male' && form.gender !== 'Female') {
+      setMediaError('Choose Male or Female.')
+      return
+    }
     setLoading(true)
     setMediaError('')
 
@@ -316,10 +400,12 @@ export default function BecomeTutorPage() {
     const payload = {
       title: form.title,
       surname: form.surname,
+      gender: form.gender,
       subjects: subjectsArray,
       levels: form.levels,
       languages: form.languages,
       qualifications: form.qualifications,
+      qualification_detail: form.qualification_detail.trim() || null,
       description: form.description,
       years_experience: form.years_experience ? parseInt(form.years_experience) : null,
       is_live: true,
@@ -377,6 +463,7 @@ export default function BecomeTutorPage() {
           first_name: firstName.trim(),
           surname: form.surname.trim(),
           phone: accountPhone.trim(),
+          gender: form.gender,
         },
       })
       if (accountError) {
@@ -390,16 +477,29 @@ export default function BecomeTutorPage() {
 
     setLoading(false)
     if (error) {
-      setMediaError('Error saving profile: ' + error.message)
+      setMediaError(missingColumn(error.message) ? MEDIA_SCHEMA_HINT : 'Error saving profile: ' + error.message)
       return
     }
     if (tutorId) setProfileId(tutorId)
-    if (photo_url) setSavedPhotoUrl(photo_url)
-    if (video_url) setSavedVideoUrl(video_url)
+    if (photo_url && photoFile) {
+      setPhotoStatus('pending')
+      setStoredPhotoDisplay(URL.createObjectURL(photoFile))
+    }
+    if (video_url && videoPreview) {
+      setVideoStatus('pending')
+      setSavedVideoPreview((current) => {
+        if (current?.startsWith('blob:') && current !== videoPreview) URL.revokeObjectURL(current)
+        return videoPreview
+      })
+      setVideoPreview(null)
+    }
     setPhotoFile(null)
     setVideoFile(null)
+    setVideoCropped(false)
     sessionStorage.removeItem(DRAFT_KEY)
-    setNotice('Profile saved.')
+    setNotice(photo_url || video_url
+      ? 'Profile saved. The new photo or video stays hidden until it is approved.'
+      : 'Profile saved.')
     notifyTutorProfile()
   }
 
@@ -417,9 +517,10 @@ export default function BecomeTutorPage() {
       <div className="mb-4 h-1.5 w-16 bg-zw-gold" />
       <p className="mb-4" style={{ color: '#1a1a1a' }}>
         {profileId
-          ? 'Everything saved on your tutor profile is here. Change a field, or add anything that is still empty, then save.'
-          : 'Add your tutor details below. They go on your public profile as soon as you save.'}
+          ? 'Everything saved on your tutor profile is here. Change a field, or add anything that is still empty, then save. A new photo or video stays hidden until it is approved.'
+          : 'Add your tutor details below. Your subjects, levels, and description go on your public profile when you save. A photo or video stays hidden until it is approved.'}
       </p>
+      {schemaNote && <p className="mb-4 text-sm" style={{ color: '#d40000' }}>{schemaNote}</p>}
       <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         <Link href="/bookings" className="font-bold underline" style={{ color: '#006400' }}>My bookings</Link>
         {profileId && (
@@ -429,13 +530,13 @@ export default function BecomeTutorPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border-t-4 border-zw-green bg-white p-6 text-zinc-900 shadow" style={{ backgroundColor: '#ffffff', color: '#111111', forcedColorAdjust: 'none' }}>
         <div className="flex items-center gap-4">
-          {photoPreview ? (
-            <img src={photoPreview} alt="" className="h-20 w-20 rounded-full object-cover" style={{ border: '3px solid #ffd200' }} />
-          ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold" style={{ backgroundColor: '#ffd200', color: '#006400' }}>
-              {(form.surname || firstName || '?')[0]}
-            </div>
-          )}
+          <TutorPhoto
+            photoUrl={!photoFile && photoStatus === 'approved' ? storedPhotoDisplay : null}
+            gender={form.gender}
+            initial={(form.surname || firstName || '?')[0]}
+            alt=""
+            className="h-20 w-20 shrink-0 rounded-full text-2xl"
+          />
           <div>
             <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>{displayName || 'Your name'}</p>
             {signedInEmail && <p className="text-sm" style={{ color: '#3f3f46' }}>{signedInEmail}</p>}
@@ -469,6 +570,25 @@ export default function BecomeTutorPage() {
             <input required value={form.surname} onChange={e => setForm({...form, surname: e.target.value})} className={fieldClass} style={lightControl} />
           </div>
         </div>
+
+        <fieldset>
+          <legend className="block text-sm font-medium" style={labelStyle}>Gender *</legend>
+          <div className="mt-1 flex gap-4">
+            {GENDERS.map((option) => (
+              <label key={option} className="flex items-center gap-2" style={{ color: '#111111', backgroundColor: '#ffffff' }}>
+                <input
+                  type="radio"
+                  name="gender"
+                  value={option}
+                  required
+                  checked={form.gender === option}
+                  onChange={() => setForm({ ...form, gender: option })}
+                />
+                {option}
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <div>
           <label className="block text-sm font-medium" style={labelStyle}>Subjects (comma separated) *</label>
@@ -521,7 +641,7 @@ export default function BecomeTutorPage() {
         <div>
           <label className="block text-sm font-medium" style={labelStyle}>Held qualifications</label>
           <div className="mt-1 flex flex-wrap gap-2">
-            {QUALIFICATIONS.map(item => {
+            {qualificationChoices(form.qualifications).map(item => {
               const selected = form.qualifications.includes(item)
               return (
                 <button
@@ -537,7 +657,16 @@ export default function BecomeTutorPage() {
               )
             })}
           </div>
-          <p className="mt-1 text-xs">Tap each one you hold: Degree, Diploma, or National Certificate.</p>
+          <p className="mt-1 text-xs" style={hintStyle}>Tap each one you hold. Add the subject or institution below.</p>
+          <label className="mt-3 block text-sm font-medium" style={labelStyle} htmlFor="qualification-detail">Subject or institution</label>
+          <input
+            id="qualification-detail"
+            value={form.qualification_detail}
+            onChange={e => setForm({ ...form, qualification_detail: e.target.value })}
+            placeholder="For example, BSc Mathematics, University of Zimbabwe"
+            className={fieldClass}
+            style={lightControl}
+          />
         </div>
 
         <div>
@@ -560,8 +689,8 @@ export default function BecomeTutorPage() {
           <div>
             <label htmlFor="profile-photo" className="upload-tile">
               <span className="upload-thumb">
-                {photoPreview ? (
-                  <img src={photoPreview} alt="" />
+                {photoFile || storedPhotoDisplay ? (
+                  <File className="h-8 w-8" aria-hidden="true" />
                 ) : (
                   <>
                     <ImagePlus className="h-8 w-8" aria-hidden="true" />
@@ -570,8 +699,8 @@ export default function BecomeTutorPage() {
                 )}
               </span>
               <span>
-                <span className="upload-tile-title">{photoFile || savedPhotoUrl ? 'Click to change photo' : 'Click to upload a photo'}</span>
-                <span className="upload-tile-hint">Optional. JPG, PNG, or WEBP. A clear photo of your face, under 5 MB.</span>
+                <span className="upload-tile-title">{photoFile || storedPhotoDisplay ? 'Click to change photo' : 'Click to upload a photo'}</span>
+                <span className="upload-tile-hint">Optional. JPG, PNG, or WEBP, under 5 MB. Parents see your gender icon until the photo is approved.</span>
                 {photoFile && <span className="upload-tile-file">{photoFile.name}</span>}
               </span>
               <input
@@ -582,19 +711,29 @@ export default function BecomeTutorPage() {
               />
             </label>
             {photoError && <p className="mt-2 text-xs" style={{ color: '#d40000', backgroundColor: '#ffffff' }}>{photoError}</p>}
+            {!photoFile && mediaStatusNote('photo', photoStatus) && (
+              <p className="mt-2 text-xs" style={hintStyle}>{mediaStatusNote('photo', photoStatus)}</p>
+            )}
+            {photoFile && <p className="mt-2 text-xs" style={hintStyle}>Parents see your gender icon until this photo is approved.</p>}
           </div>
 
           <div>
             <label htmlFor="intro-video" className="upload-tile">
               <span className="upload-thumb">
-                <Video className="h-8 w-8" aria-hidden="true" />
-                <span>{videoFile || savedVideoUrl ? 'Ready' : 'Upload'}</span>
+                {videoFile || savedVideoPreview ? (
+                  <File className="h-8 w-8" aria-hidden="true" />
+                ) : (
+                  <>
+                    <Video className="h-8 w-8" aria-hidden="true" />
+                    <span>Upload</span>
+                  </>
+                )}
               </span>
               <span>
-                <span className="upload-tile-title">{videoFile || savedVideoUrl ? 'Click to change video' : 'Click to upload a video'}</span>
-                <span className="upload-tile-hint">Optional. MP4, WEBM, or MOV. About 10–15 seconds, 20 seconds at most.</span>
+                <span className="upload-tile-title">{videoFile || savedVideoPreview ? 'Click to change video' : 'Click to upload a video'}</span>
+                <span className="upload-tile-hint">Optional. Vertical 9:16, filmed with your phone held upright. About 10–15 seconds, 20 seconds at most. Wider clips are cropped when the browser can.</span>
                 {videoChecking && <span className="upload-tile-file">Checking the clip...</span>}
-                {videoFile && <span className="upload-tile-file">{videoFile.name}{videoSeconds !== null ? ` · ${videoSeconds} seconds` : ''}</span>}
+                {videoFile && <span className="upload-tile-file">{videoFile.name}{videoSeconds !== null ? ` · ${videoSeconds} seconds` : ''}{videoCropped ? ' · cropped to 9:16' : ''}</span>}
               </span>
               <input
                 id="intro-video"
@@ -603,9 +742,10 @@ export default function BecomeTutorPage() {
                 onChange={onVideoChange}
               />
             </label>
-            {savedVideoUrl && !videoFile && (
-              <video controls playsInline preload="metadata" src={savedVideoUrl} className="mt-2 w-full rounded-lg bg-black" />
+            {!videoFile && mediaStatusNote('video', videoStatus) && (
+              <p className="mt-2 text-xs" style={hintStyle}>{mediaStatusNote('video', videoStatus)}</p>
             )}
+            {videoFile && <p className="mt-2 text-xs" style={hintStyle}>This video stays off your public profile until it is approved.</p>}
             {videoError && <p className="mt-2 text-xs" style={{ color: '#d40000', backgroundColor: '#ffffff' }}>{videoError}</p>}
           </div>
         </div>

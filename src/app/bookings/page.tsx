@@ -138,10 +138,10 @@ export default function BookingsPage() {
         )}
       </section>}
 
-      <section>
+      {!viewerIsTutor && <section>
         <h2 className="text-xl font-semibold mb-3" style={{ color: '#1a1a1a' }}>Your lesson requests</h2>
         {outgoing.length === 0 ? (
-          <p style={{ color: '#3f3f46' }}>You have not requested a lesson yet. <Link href="/tutors" className="underline" style={{ color: '#006400' }}>{viewerIsTutor ? 'Tutors' : 'Find Tutors'}</Link></p>
+          <p style={{ color: '#3f3f46' }}>You have not requested a lesson yet. <Link href="/tutors" className="underline" style={{ color: '#006400' }}>Find Tutors</Link></p>
         ) : (
           <ul className="space-y-3">
             {outgoing.map((row) => {
@@ -159,7 +159,7 @@ export default function BookingsPage() {
             })}
           </ul>
         )}
-      </section>
+      </section>}
     </div>
   )
 }

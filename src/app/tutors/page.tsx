@@ -6,6 +6,9 @@ import { TutorPhoto } from '@/components/TutorPhoto'
 import Link from 'next/link'
 import { useTutorSession } from '@/lib/use-tutor-session'
 import { TEACHING_LEVELS, teachingLevelLabel } from '@/lib/teaching-levels'
+import { GENDERS } from '@/lib/gender'
+
+import { missingColumn, missingRpc } from '@/lib/media-schema'
 const LANGUAGES = ['English', 'English and Shona', 'English and Ndebele', 'English, Shona and Ndebele']
 const lightControl: CSSProperties = { backgroundColor: '#ffffff', color: '#111111', WebkitTextFillColor: '#111111', forcedColorAdjust: 'none', colorScheme: 'light only' }
 const labelStyle: CSSProperties = { display: 'block', marginBottom: '4px', backgroundColor: '#ffffff', color: '#111111', WebkitTextFillColor: '#111111', forcedColorAdjust: 'none', colorScheme: 'light only' }
@@ -17,14 +20,36 @@ export default function TutorsPage() {
   const [subject, setSubject] = useState('')
   const [level, setLevel] = useState('')
   const [language, setLanguage] = useState('')
+  const [gender, setGender] = useState('')
   const { ready: viewerReady, isTutor } = useTutorSession()
 
   useEffect(() => {
-    fetchTutors()
-  }, [subject, level, language])
+    let cancelled = false
+    fetchTutors().then((result) => {
+      if (cancelled) return
+      setTutors(result.tutors)
+      setLoadError(result.error)
+      setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [subject, level, language, gender])
 
   async function fetchTutors() {
     setLoading(true)
+    const rpc = await supabase.rpc('list_tutors', {
+      p_subject: subject || null,
+      p_level: level || null,
+      p_language: language || null,
+      p_gender: gender || null,
+    })
+    const fromRpc = tutorRows(rpc.data)
+    if (!rpc.error && fromRpc) return { tutors: fromRpc, error: null }
+    if (rpc.error && !missingRpc(rpc.error.message)) {
+      return { tutors: [] as Tutor[], error: 'The tutor list could not be loaded. Check the Supabase project URL, then refresh.' }
+    }
+
     let query = supabase
       .from('tutors')
       .select(PUBLIC_TUTOR_COLUMNS)
@@ -34,16 +59,18 @@ export default function TutorsPage() {
     if (subject) query = query.contains('subjects', [subject])
     if (level) query = query.contains('levels', [level])
     if (language) query = query.contains('languages', [language])
+    if (gender) query = query.eq('gender', gender)
 
     const { data, error } = await query
     if (error || !data) {
-      setTutors([])
-      setLoadError('The tutor list could not be loaded. Check the Supabase project URL, then refresh.')
-    } else {
-      setLoadError(null)
-      setTutors(data)
+      return {
+        tutors: [] as Tutor[],
+        error: error && missingColumn(error.message)
+          ? 'In the Supabase SQL editor, run the media review section at the end of supabase/schema.sql, then refresh.'
+          : 'The tutor list could not be loaded. Check the Supabase project URL, then refresh.',
+      }
     }
-    setLoading(false)
+    return { tutors: data, error: null }
   }
 
   return (
@@ -52,7 +79,7 @@ export default function TutorsPage() {
       <h1 className="text-3xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Find a Tutor</h1>
       <div className="mb-6 h-1.5 w-16 bg-zw-gold" />
 
-      <div className="bg-white p-4 rounded-lg shadow mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 border-t-4 border-zw-green" style={{ backgroundColor: '#ffffff', color: '#111111', forcedColorAdjust: 'none' }}>
+      <div className="bg-white p-4 rounded-lg shadow mb-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 border-t-4 border-zw-green" style={{ backgroundColor: '#ffffff', color: '#111111', forcedColorAdjust: 'none' }}>
         <div style={{ backgroundColor: '#ffffff' }}>
           <label className="block text-sm font-medium mb-1" style={labelStyle}>Subject</label>
           <input
@@ -78,6 +105,13 @@ export default function TutorsPage() {
             {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
+        <div style={{ backgroundColor: '#ffffff' }}>
+          <label className="block text-sm font-medium mb-1" style={labelStyle}>Gender</label>
+          <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full border border-zinc-300 rounded px-3 py-2 bg-white text-zinc-900" style={lightControl}>
+            <option value="">Any</option>
+            {GENDERS.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+        </div>
       </div>
 
       {loading ? (
@@ -98,6 +132,7 @@ export default function TutorsPage() {
               <div className="flex items-start gap-3">
                 <TutorPhoto
                   photoUrl={tutor.photo_url}
+                  gender={tutor.gender}
                   initial={tutor.surname?.[0] || '?'}
                   alt=""
                   className="h-16 w-16 shrink-0 rounded-full text-xl"
@@ -106,7 +141,7 @@ export default function TutorsPage() {
                   <h3 className="font-semibold" style={{ color: '#1a1a1a' }}>{[tutor.title, tutor.surname].filter(Boolean).join(' ')}</h3>
                   <p className="text-sm text-zinc-500">{tutor.levels.map(teachingLevelLabel).join(', ')}</p>
                   <p className="text-sm mt-1">{tutor.subjects.slice(0, 3).join(', ')}{tutor.subjects.length > 3 ? '...' : ''}</p>
-                  <p className="text-xs text-zinc-400 mt-1">{tutor.languages.join(', ')}</p>
+                  <p className="text-xs text-zinc-400 mt-1">{(tutor.languages || []).join(', ')}</p>
                   {tutor.no_show_count > 0 && (
                     <p className="text-xs text-red-600 mt-1">No-shows: {tutor.no_show_count}</p>
                   )}
@@ -119,4 +154,22 @@ export default function TutorsPage() {
     </div>
     </div>
   )
+}
+
+function tutorRows(data: unknown): Tutor[] | null {
+  const value = typeof data === 'string' ? parseJson(data) : data
+  if (!Array.isArray(value)) return null
+  return value.filter((item): item is Tutor => {
+    if (!item || typeof item !== 'object') return false
+    const row = item as Tutor
+    return typeof row.id === 'string' && typeof row.surname === 'string' && Array.isArray(row.subjects) && Array.isArray(row.levels)
+  })
+}
+
+function parseJson(value: string) {
+  try {
+    return JSON.parse(value) as unknown
+  } catch {
+    return null
+  }
 }
