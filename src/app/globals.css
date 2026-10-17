@@ -161,7 +161,40 @@ label.upload-tile:focus-within {
   background-color: transparent;
 }
 
-label.upload-tile input[type="file"] {
+label.upload-attached {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 0;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d4d4d8;
+  background-color: #ffffff;
+  color: #3f3f46;
+  -webkit-text-fill-color: #3f3f46;
+  cursor: pointer;
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+label.upload-attached svg {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  color: #006400;
+}
+
+label.upload-attached span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+label.upload-tile input[type="file"],
+label.upload-attached input[type="file"] {
   position: absolute;
   width: 1px;
   height: 1px;

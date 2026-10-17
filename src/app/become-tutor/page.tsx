@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
-import { File, ImagePlus, Video } from 'lucide-react'
+import { Folder, ImagePlus, Video } from 'lucide-react'
 import { supabase, EDITOR_TUTOR_COLUMNS, PUBLIC_TUTOR_COLUMNS } from '@/lib/supabase'
 import { notifyTutorProfile } from '@/lib/use-tutor-session'
 import { TEACHING_LEVELS } from '@/lib/teaching-levels'
@@ -687,22 +687,24 @@ export default function BecomeTutorPage() {
 
         <div className="upload-grid">
           <div>
-            <label htmlFor="profile-photo" className="upload-tile">
-              <span className="upload-thumb">
-                {photoFile || storedPhotoDisplay ? (
-                  <File className="h-8 w-8" aria-hidden="true" />
-                ) : (
-                  <>
+            <label htmlFor="profile-photo" className={photoFile || storedPhotoDisplay ? 'upload-attached' : 'upload-tile'}>
+              {photoFile || storedPhotoDisplay ? (
+                <>
+                  <Folder className="h-8 w-8 shrink-0" aria-hidden="true" />
+                  <span>{photoFile ? photoFile.name : 'Photo attached'}</span>
+                </>
+              ) : (
+                <>
+                  <span className="upload-thumb">
                     <ImagePlus className="h-8 w-8" aria-hidden="true" />
                     <span>Upload</span>
-                  </>
-                )}
-              </span>
-              <span>
-                <span className="upload-tile-title">{photoFile || storedPhotoDisplay ? 'Click to change photo' : 'Click to upload a photo'}</span>
-                <span className="upload-tile-hint">Optional. JPG, PNG, or WEBP, under 5 MB. Parents see your gender icon until the photo is approved.</span>
-                {photoFile && <span className="upload-tile-file">{photoFile.name}</span>}
-              </span>
+                  </span>
+                  <span>
+                    <span className="upload-tile-title">Click to upload a photo</span>
+                    <span className="upload-tile-hint">Optional. JPG, PNG, or WEBP, under 5 MB. Parents see your gender icon until the photo is approved.</span>
+                  </span>
+                </>
+              )}
               <input
                 id="profile-photo"
                 type="file"
@@ -718,23 +720,29 @@ export default function BecomeTutorPage() {
           </div>
 
           <div>
-            <label htmlFor="intro-video" className="upload-tile">
-              <span className="upload-thumb">
-                {videoFile || savedVideoPreview ? (
-                  <File className="h-8 w-8" aria-hidden="true" />
-                ) : (
-                  <>
+            <label htmlFor="intro-video" className={videoFile || savedVideoPreview ? 'upload-attached' : 'upload-tile'}>
+              {videoFile || savedVideoPreview ? (
+                <>
+                  <Folder className="h-8 w-8 shrink-0" aria-hidden="true" />
+                  <span>
+                    {videoFile
+                      ? `${videoFile.name}${videoSeconds !== null ? ` · ${videoSeconds} seconds` : ''}${videoCropped ? ' · cropped to 9:16' : ''}`
+                      : 'Video attached'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="upload-thumb">
                     <Video className="h-8 w-8" aria-hidden="true" />
                     <span>Upload</span>
-                  </>
-                )}
-              </span>
-              <span>
-                <span className="upload-tile-title">{videoFile || savedVideoPreview ? 'Click to change video' : 'Click to upload a video'}</span>
-                <span className="upload-tile-hint">Optional. Vertical 9:16, filmed with your phone held upright. About 10–15 seconds, 20 seconds at most. Wider clips are cropped when the browser can.</span>
-                {videoChecking && <span className="upload-tile-file">Checking the clip...</span>}
-                {videoFile && <span className="upload-tile-file">{videoFile.name}{videoSeconds !== null ? ` · ${videoSeconds} seconds` : ''}{videoCropped ? ' · cropped to 9:16' : ''}</span>}
-              </span>
+                  </span>
+                  <span>
+                    <span className="upload-tile-title">Click to upload a video</span>
+                    <span className="upload-tile-hint">Optional. Vertical 9:16, filmed with your phone held upright. About 10–15 seconds, 20 seconds at most. Wider clips are cropped when the browser can.</span>
+                    {videoChecking && <span className="upload-tile-file">Checking the clip...</span>}
+                  </span>
+                </>
+              )}
               <input
                 id="intro-video"
                 type="file"
