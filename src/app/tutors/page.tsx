@@ -21,7 +21,7 @@ export default function TutorsPage() {
   const [level, setLevel] = useState('')
   const [language, setLanguage] = useState('')
   const [gender, setGender] = useState('')
-  const { ready: viewerReady, isTutor } = useTutorSession()
+  const { ready: viewerReady, isTutor, userId } = useTutorSession()
 
   useEffect(() => {
     let cancelled = false
@@ -121,7 +121,7 @@ export default function TutorsPage() {
       ) : tutors.length === 0 ? (
         <div>
           <p style={{ color: '#3f3f46' }}>No tutors match yet. Try adjusting your filters, or check back soon.</p>
-          {viewerReady && !isTutor && (
+          {viewerReady && !isTutor && !userId && (
             <Link href="/tutor-signup" className="mt-4 inline-block rounded-lg px-4 py-2 font-medium" style={{ backgroundColor: '#006400', color: '#ffffff' }}>Become a Tutor</Link>
           )}
         </div>

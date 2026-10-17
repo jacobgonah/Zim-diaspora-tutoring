@@ -217,8 +217,11 @@ create table if not exists public.parents (
   first_name text not null,
   surname text not null,
   phone text,
+  location text,
   created_at timestamptz default now()
 );
+
+alter table public.parents add column if not exists location text;
 
 alter table public.parents enable row level security;
 

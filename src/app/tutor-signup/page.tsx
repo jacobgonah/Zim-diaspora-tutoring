@@ -45,7 +45,8 @@ function TutorSignUpForm() {
     supabase.auth.getUser().then(({ data }) => {
       if (cancelled) return
       if (data.user) {
-        router.replace(destinationFor('tutor', next))
+        const role = data.user.user_metadata?.role
+        router.replace(role === 'tutor' ? destinationFor('tutor', next) : '/account')
         return
       }
       setChecking(false)

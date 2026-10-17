@@ -39,7 +39,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { ready: viewerReady, isTutor } = useTutorSession();
+  const { ready: viewerReady, isTutor, userId } = useTutorSession();
 
   const next = safeNext(searchParams.get("next"));
 
@@ -156,7 +156,7 @@ function LoginForm() {
         >
           {loading ? "Signing in..." : "Log in"}
         </button>
-        {viewerReady && !isTutor && (
+        {viewerReady && !isTutor && !(userId && role === "tutor") && (
           <p className="text-sm" style={{ color: "#3f3f46" }}>
             {role === "tutor" ? "New tutor? " : "New parent? "}
             <Link href={signupHref} className="underline" style={{ color: "#006400" }}>

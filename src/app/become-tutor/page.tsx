@@ -245,6 +245,9 @@ export default function BecomeTutorPage() {
             setSavedVideoPreview(existing.video_url)
           }
         }
+      } else if (user.user_metadata?.role !== 'tutor') {
+        router.replace('/account')
+        return
       } else {
         const raw = sessionStorage.getItem(DRAFT_KEY)
         let draft: Record<string, unknown> = {}
