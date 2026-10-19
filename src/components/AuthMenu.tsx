@@ -29,7 +29,7 @@ export function AuthMenu() {
   }
 
   return (
-    <Link href="/bookings" className="font-bold" style={{ color: "#006400" }}>
+    <Link href="/bookings" className="font-bold text-neutral-300" style={{ color: "#d4d4d4" }}>
       My bookings
     </Link>
   );

@@ -115,14 +115,14 @@ export default function BookForm({ tutorId }: { tutorId: string }) {
   }
 
   if (!ready) {
-    return <p className="max-w-md mx-auto px-4 py-16" style={{ color: '#111111' }}>Checking your account...</p>
+    return <p className="max-w-md mx-auto px-4 py-16" style={{ color: '#f5f5f5' }}>Checking your account...</p>
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-8" style={{ color: '#1a1a1a' }}>
-      <h1 className="text-2xl font-bold mb-2" style={{ color: '#006400' }}>Request a lesson time</h1>
+    <div className="max-w-md mx-auto px-4 py-8" style={{ color: '#f5f5f5' }}>
+      <h1 className="text-2xl font-bold mb-2" style={{ color: '#ffffff' }}>Request a lesson time</h1>
       <div className="mb-4 h-1.5 w-16 bg-zw-gold" />
-      <p className="mb-4 text-sm" style={{ color: '#3f3f46' }}>
+      <p className="mb-4 text-sm" style={{ color: '#a3a3a3' }}>
         This request is tied to your signed-in account. The tutor accepts it, then WhatsApp opens for both of you.
       </p>
       <form onSubmit={handleBook} className="space-y-4 bg-white p-6 rounded-lg shadow" style={{ backgroundColor: '#ffffff', color: '#111111', borderTop: '4px solid #ffd200' }}>

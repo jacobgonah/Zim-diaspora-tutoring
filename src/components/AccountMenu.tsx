@@ -71,7 +71,7 @@ export function AccountMenu() {
         aria-controls="account-menu"
         onClick={() => (open ? close() : setOpen(true))}
         className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-bold"
-        style={{ borderColor: '#006400', backgroundColor: '#ffffff', color: '#006400' }}
+        style={{ borderColor: '#404040', backgroundColor: '#09090b', color: '#f5f5f5' }}
       >
         <Menu className="h-4 w-4" aria-hidden="true" />
         Menu

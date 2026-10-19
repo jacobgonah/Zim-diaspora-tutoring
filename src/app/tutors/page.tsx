@@ -3,6 +3,7 @@
 import { useState, useEffect, type CSSProperties } from 'react'
 import { supabase, PUBLIC_TUTOR_COLUMNS, type Tutor } from '@/lib/supabase'
 import { TutorPhoto } from '@/components/TutorPhoto'
+import { TutorStatus } from '@/components/TutorStatus'
 import Link from 'next/link'
 import { useTutorSession } from '@/lib/use-tutor-session'
 import { TEACHING_LEVELS, teachingLevelLabel } from '@/lib/teaching-levels'
@@ -10,8 +11,8 @@ import { GENDERS } from '@/lib/gender'
 
 import { missingColumn, missingRpc } from '@/lib/media-schema'
 const LANGUAGES = ['English', 'English and Shona', 'English and Ndebele', 'English, Shona and Ndebele']
-const lightControl: CSSProperties = { backgroundColor: '#ffffff', color: '#111111', WebkitTextFillColor: '#111111', forcedColorAdjust: 'none', colorScheme: 'light only' }
-const labelStyle: CSSProperties = { display: 'block', marginBottom: '4px', backgroundColor: '#ffffff', color: '#111111', WebkitTextFillColor: '#111111', forcedColorAdjust: 'none', colorScheme: 'light only' }
+const lightControl: CSSProperties = { backgroundColor: '#09090b', color: '#f5f5f5', WebkitTextFillColor: '#f5f5f5', forcedColorAdjust: 'none', colorScheme: 'dark' }
+const labelStyle: CSSProperties = { display: 'block', marginBottom: '4px', backgroundColor: 'transparent', color: '#d4d4d4', WebkitTextFillColor: '#d4d4d4', forcedColorAdjust: 'none', colorScheme: 'dark' }
 
 export default function TutorsPage() {
   const [tutors, setTutors] = useState<Tutor[]>([])
@@ -74,40 +75,40 @@ export default function TutorsPage() {
   }
 
   return (
-    <div style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f7f4ea 420px)', color: '#1a1a1a' }}>
+    <div style={{ color: '#f5f5f5' }}>
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Find a Tutor</h1>
-      <div className="mb-6 h-1.5 w-16 bg-zw-gold" />
+      <h1 className="mb-3 text-center text-3xl font-bold tracking-tight md:text-4xl" style={{ color: '#ffffff' }}>Find a Tutor</h1>
+      <div className="mx-auto mb-8 h-1.5 w-20 rounded-full bg-amber-400" style={{ backgroundColor: '#FFD200' }} />
 
-      <div className="bg-white p-4 rounded-lg shadow mb-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 border-t-4 border-zw-green" style={{ backgroundColor: '#ffffff', color: '#111111', forcedColorAdjust: 'none' }}>
-        <div style={{ backgroundColor: '#ffffff' }}>
-          <label className="block text-sm font-medium mb-1" style={labelStyle}>Subject</label>
+      <div className="sticky top-24 z-20 mb-8 grid grid-cols-1 gap-4 rounded-xl border border-neutral-800 border-t-4 border-t-emerald-600 bg-neutral-900/95 p-4 shadow-lg shadow-black/40 backdrop-blur-md md:grid-cols-2 xl:grid-cols-4" style={{ backgroundColor: 'rgba(23, 23, 23, 0.95)', color: '#f5f5f5', forcedColorAdjust: 'none' }}>
+        <div style={{ backgroundColor: 'transparent' }}>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider" style={labelStyle}>Subject</label>
           <input
             type="text"
             placeholder="e.g. Mathematics, Science"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="w-full border border-zinc-300 rounded px-3 py-2 bg-white text-zinc-900 placeholder:text-zinc-500"
+            className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-neutral-100 placeholder:text-neutral-500 transition-colors focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
             style={lightControl}
           />
         </div>
-        <div style={{ backgroundColor: '#ffffff' }}>
-          <label className="block text-sm font-medium mb-1" style={labelStyle}>Level</label>
-          <select value={level} onChange={(e) => setLevel(e.target.value)} className="w-full border border-zinc-300 rounded px-3 py-2 bg-white text-zinc-900" style={lightControl}>
+        <div style={{ backgroundColor: 'transparent' }}>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider" style={labelStyle}>Level</label>
+          <select value={level} onChange={(e) => setLevel(e.target.value)} className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-neutral-100 placeholder:text-neutral-500 transition-colors focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400" style={lightControl}>
             <option value="">Any</option>
             {TEACHING_LEVELS.map(level => <option key={level.value} value={level.value}>{level.label}</option>)}
           </select>
         </div>
-        <div style={{ backgroundColor: '#ffffff' }}>
-          <label className="block text-sm font-medium mb-1" style={labelStyle}>Language</label>
-          <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full border border-zinc-300 rounded px-3 py-2 bg-white text-zinc-900" style={lightControl}>
+        <div style={{ backgroundColor: 'transparent' }}>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider" style={labelStyle}>Language</label>
+          <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-neutral-100 placeholder:text-neutral-500 transition-colors focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400" style={lightControl}>
             <option value="">Any</option>
             {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
-        <div style={{ backgroundColor: '#ffffff' }}>
-          <label className="block text-sm font-medium mb-1" style={labelStyle}>Gender</label>
-          <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full border border-zinc-300 rounded px-3 py-2 bg-white text-zinc-900" style={lightControl}>
+        <div style={{ backgroundColor: 'transparent' }}>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider" style={labelStyle}>Gender</label>
+          <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-neutral-100 placeholder:text-neutral-500 transition-colors focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400" style={lightControl}>
             <option value="">Any</option>
             {GENDERS.map((option) => <option key={option} value={option}>{option}</option>)}
           </select>
@@ -115,35 +116,36 @@ export default function TutorsPage() {
       </div>
 
       {loading ? (
-        <p>Loading tutors...</p>
+        <p className="text-neutral-400">Loading tutors...</p>
       ) : loadError ? (
-        <p style={{ color: '#1a1a1a' }}>{loadError}</p>
+        <p className="rounded-xl border border-red-500/40 bg-neutral-900 px-4 py-3" style={{ color: '#fca5a5' }}>{loadError}</p>
       ) : tutors.length === 0 ? (
-        <div>
-          <p style={{ color: '#3f3f46' }}>No tutors match yet. Try adjusting your filters, or check back soon.</p>
+        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-8 text-center">
+          <p style={{ color: '#a3a3a3' }}>No tutors match yet. Try adjusting your filters, or check back soon.</p>
           {viewerReady && !isTutor && !userId && (
-            <Link href="/tutor-signup" className="mt-4 inline-block rounded-lg px-4 py-2 font-medium" style={{ backgroundColor: '#006400', color: '#ffffff' }}>Become a Tutor</Link>
+            <Link href="/tutor-signup" className="mt-4 inline-block rounded-lg bg-amber-400 px-5 py-2 font-bold text-neutral-950 transition-colors hover:bg-amber-300" style={{ color: '#09090b' }}>Become a Tutor</Link>
           )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tutors.map((tutor) => (
-            <Link key={tutor.id} href={`/tutors/${tutor.id}`} className="block bg-white p-4 rounded-lg shadow hover:shadow-md transition border-b-4 border-zw-gold" style={{ backgroundColor: '#ffffff', color: '#1a1a1a' }}>
+            <Link key={tutor.id} href={`/tutors/${tutor.id}`} className="group block rounded-xl border border-neutral-800 border-b-4 border-b-amber-400 bg-neutral-900 p-5 shadow-lg shadow-black/30 transition hover:-translate-y-0.5 hover:border-neutral-700 hover:border-b-amber-300 hover:shadow-black/60 focus:outline-none focus:ring-2 focus:ring-amber-400" style={{ backgroundColor: '#171717', color: '#e5e5e5' }}>
               <div className="flex items-start gap-3">
                 <TutorPhoto
                   photoUrl={tutor.photo_url}
                   gender={tutor.gender}
                   initial={tutor.surname?.[0] || '?'}
                   alt=""
-                  className="h-16 w-16 shrink-0 rounded-full text-xl"
+                  className="h-16 w-16 shrink-0 rounded-full text-xl ring-2 ring-emerald-800"
                 />
                 <div>
-                  <h3 className="font-semibold" style={{ color: '#1a1a1a' }}>{[tutor.title, tutor.surname].filter(Boolean).join(' ')}</h3>
-                  <p className="text-sm text-zinc-500">{tutor.levels.map(teachingLevelLabel).join(', ')}</p>
-                  <p className="text-sm mt-1">{tutor.subjects.slice(0, 3).join(', ')}{tutor.subjects.length > 3 ? '...' : ''}</p>
-                  <p className="text-xs text-zinc-400 mt-1">{(tutor.languages || []).join(', ')}</p>
+                  <h3 className="font-semibold transition-colors group-hover:text-amber-400" style={{}}>{[tutor.title, tutor.surname].filter(Boolean).join(' ')}</h3>
+                  <div className="mt-1"><TutorStatus lastSeen={(tutor as Tutor & { last_seen?: string | null }).last_seen ?? null} /></div>
+                  <p className="mt-1 inline-block rounded-full border border-emerald-800 bg-emerald-950 px-2 py-0.5 text-xs font-medium text-emerald-400">{tutor.levels.map(teachingLevelLabel).join(', ')}</p>
+                  <p className="mt-2 text-sm text-neutral-300">{tutor.subjects.slice(0, 3).join(', ')}{tutor.subjects.length > 3 ? '...' : ''}</p>
+                  <p className="mt-1 text-xs text-neutral-500">{(tutor.languages || []).join(', ')}</p>
                   {tutor.no_show_count > 0 && (
-                    <p className="text-xs text-red-600 mt-1">No-shows: {tutor.no_show_count}</p>
+                    <p className="mt-2 inline-block rounded-full border border-red-500/40 bg-red-950/40 px-2 py-0.5 text-xs font-medium text-red-400">No-shows: {tutor.no_show_count}</p>
                   )}
                 </div>
               </div>

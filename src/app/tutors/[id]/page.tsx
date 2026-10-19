@@ -16,9 +16,9 @@ export default async function TutorProfile({ params }: { params: Promise<{ id: s
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <Link href="/tutors" className="text-zw-green hover:underline text-sm">← Back to tutors</Link>
+      <Link href="/tutors" className="text-sm hover:underline" style={{ color: '#FFD200' }}>← Back to tutors</Link>
       
-      <div className="bg-white p-6 rounded-lg shadow mt-4 border-t-4 border-zw-green">
+      <div className="bg-white p-6 rounded-lg shadow mt-4 border-t-4 border-zw-green" style={{ backgroundColor: '#ffffff', color: '#1a1a1a' }}>
         <div className="flex items-start gap-4">
           <TutorPhoto
             photoUrl={tutor.photo_url}

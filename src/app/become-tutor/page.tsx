@@ -508,17 +508,17 @@ export default function BecomeTutorPage() {
 
   if (!onProfile || !userId || !formReady) {
     return (
-      <p className="max-w-2xl mx-auto px-4 py-16" style={{ color: '#111111' }}>Checking your account...</p>
+      <p className="max-w-2xl mx-auto px-4 py-16" style={{ color: '#f5f5f5' }}>Checking your account...</p>
     )
   }
 
   const displayName = [form.title, firstName, form.surname].filter(Boolean).join(' ')
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 text-zinc-900" style={{ backgroundColor: '#f7f4ea', color: '#1a1a1a' }}>
-      <h1 className="text-3xl font-bold mb-2" style={{ color: '#1a1a1a' }}>My profile</h1>
+    <div className="max-w-2xl mx-auto px-4 py-8" style={{ color: '#f5f5f5' }}>
+      <h1 className="text-3xl font-bold mb-2" style={{ color: '#ffffff' }}>My profile</h1>
       <div className="mb-4 h-1.5 w-16 bg-zw-gold" />
-      <p className="mb-4" style={{ color: '#1a1a1a' }}>
+      <p className="mb-4" style={{ color: '#d4d4d4' }}>
         {profileId
           ? 'Everything saved on your tutor profile is here. Change a field, or add anything that is still empty, then save. A new photo or video stays hidden until it is approved.'
           : 'Add your tutor details below. Your subjects, levels, and description go on your public profile when you save. A photo or video stays hidden until it is approved.'}
@@ -769,7 +769,7 @@ export default function BecomeTutorPage() {
           {loading ? 'Saving...' : 'Save profile'}
         </button>
       </form>
-      {notice && <p className="mt-4 text-sm" style={{ color: '#111111' }}>{notice}</p>}
+      {notice && <p className="mt-4 text-sm" style={{ color: '#f5f5f5' }}>{notice}</p>}
     </div>
   )
 }

@@ -1,207 +1,47 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
-:root {
-  --background: #f7f4ea;
-  --foreground: #1a1a1a;
-}
+@layer base {
+  :root {
+    --zim-green: #064e3b;
+    --zim-green-light: #059669;
+    --zim-gold: #f59e0b;
+    --zim-gold-deep: #d97706;
+    --zim-red: #dc2626;
+    --zim-black: #09090b;
+    --zim-white: #ffffff;
+  }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-zw-green: #006400;
-  --color-zw-gold: #ffd200;
-  --color-zw-red: #d40000;
-  --color-zw-cream: #f7f4ea;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #121416;
+    color: #f4f4f5;
+  }
 
-html {
-  color-scheme: only light;
-  background-color: #f7f4ea;
-  color: #1a1a1a;
-}
-
-button,
-input,
-select,
-textarea,
-option,
-label {
-  color-scheme: only light;
-}
-
-label {
-  background-color: #ffffff;
-  color: #111111;
-  -webkit-text-fill-color: #111111;
-  forced-color-adjust: none;
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-}
-
-input,
-select,
-textarea {
-  background-color: #ffffff;
-  color: #1a1a1a;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #71717a;
-  opacity: 1;
-}
-
-select option,
-select option:checked,
-select option:hover {
-  background-color: #ffffff;
-  color: #1a1a1a;
-}
-
-.header-login {
-  border-color: #006400;
-  background-color: #ffffff;
-  color: #006400;
-}
-
-.header-login:hover {
-  background-color: #006400;
-  color: #ffffff;
-}
-
-.upload-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-@media (min-width: 640px) {
-  .upload-grid {
-    grid-template-columns: 1fr 1fr;
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Outfit', 'Plus Jakarta Sans', -apple-system, sans-serif;
   }
 }
 
-label.upload-tile {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  min-height: 16rem;
-  padding: 1.25rem 1rem;
-  text-align: center;
-  cursor: pointer;
-  border-radius: 0.9rem;
-  border: 2px dashed #006400;
-  background-color: #e7f3e4;
-  color: #111111;
-  -webkit-text-fill-color: #111111;
-  forced-color-adjust: none;
-  color-scheme: only light;
-  box-shadow: 0 0 0 4px rgba(255, 210, 0, 0.55);
+/* Great Zimbabwe Stone Chevron Pattern */
+.bg-chevron-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='20' viewBox='0 0 40 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 L20 20 L40 0 L36 0 L20 16 L4 0 Z' fill='%23f59e0b' fill-opacity='0.12'/%3E%3C/svg%3E");
+  background-size: 40px 20px;
 }
 
-label.upload-tile:hover,
-label.upload-tile:focus-within {
-  background-color: #d7edcf;
-  border-style: solid;
-  box-shadow: 0 0 0 4px #ffd200;
+.bg-chevron-pattern-dark {
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='20' viewBox='0 0 40 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 L20 20 L40 0 L36 0 L20 16 L4 0 Z' fill='%23ffffff' fill-opacity='0.05'/%3E%3C/svg%3E");
+  background-size: 40px 20px;
 }
 
-.upload-thumb {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
-  width: 6.75rem;
-  height: 6.75rem;
-  overflow: hidden;
-  border-radius: 0.85rem;
-  border: 3px solid #ffd200;
-  outline: 2px solid #006400;
-  background-color: #ffd200;
-  color: #006400;
-  -webkit-text-fill-color: #006400;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.bg-chevron-pattern-green {
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='20' viewBox='0 0 40 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 L20 20 L40 0 L36 0 L20 16 L4 0 Z' fill='%23059669' fill-opacity='0.15'/%3E%3C/svg%3E");
+  background-size: 40px 20px;
 }
 
-.upload-thumb img {
+/* Zimbabwe Flag Color Bar Strip */
+.zim-flag-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  height: 6px;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.upload-tile-title {
-  display: block;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #006400;
-  -webkit-text-fill-color: #006400;
-  background-color: transparent;
-}
-
-.upload-tile-hint,
-.upload-tile-file {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: 0.8rem;
-  line-height: 1.35;
-  color: #1a1a1a;
-  -webkit-text-fill-color: #1a1a1a;
-  background-color: transparent;
-}
-
-label.upload-attached {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: fit-content;
-  max-width: 100%;
-  min-height: 0;
-  padding: 0.25rem 0.6rem;
-  border-radius: 0.5rem;
-  border: 1px solid #d4d4d8;
-  background-color: #ffffff;
-  color: #3f3f46;
-  -webkit-text-fill-color: #3f3f46;
-  cursor: pointer;
-  font-size: 0.875rem;
-  line-height: 1.3;
-}
-
-label.upload-attached svg {
-  width: 2rem;
-  height: 2rem;
-  flex-shrink: 0;
-  color: #006400;
-}
-
-label.upload-attached span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-label.upload-tile input[type="file"],
-label.upload-attached input[type="file"] {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }

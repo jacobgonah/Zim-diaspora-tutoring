@@ -63,14 +63,14 @@ export default function AuthCallbackPage() {
     <div className="max-w-md mx-auto px-4 py-16 text-center">
       {error ? (
         <>
-          <h1 className="text-2xl font-bold text-zw-green">Email link failed</h1>
-          <p className="mt-3 text-sm text-red-700">{error}</p>
-          <Link href="/login" className="mt-6 inline-block text-zw-green hover:underline">
+          <h1 className="text-2xl font-bold text-white">Email link failed</h1>
+          <p className="mt-3 text-sm text-red-300">{error}</p>
+          <Link href="/login" className="mt-6 inline-block hover:underline" style={{ color: '#FFD200' }}>
             Back to log in
           </Link>
         </>
       ) : (
-        <p className="text-zinc-600">Confirming your email...</p>
+        <p className="text-neutral-300">Confirming your email...</p>
       )}
     </div>
   );

@@ -129,15 +129,15 @@ export default function AdminPage() {
   }
 
   if (!ready) {
-    return <p className="max-w-3xl mx-auto px-4 py-16" style={{ color: '#111111' }}>Loading review...</p>
+    return <p className="max-w-3xl mx-auto px-4 py-16" style={{ color: '#f5f5f5' }}>Loading review...</p>
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8" style={{ color: '#1a1a1a' }}>
-      <h1 className="text-3xl font-bold" style={{ color: '#1a1a1a' }}>Review uploads</h1>
+    <div className="max-w-3xl mx-auto px-4 py-8" style={{ color: '#f5f5f5' }}>
+      <h1 className="text-3xl font-bold" style={{ color: '#ffffff' }}>Review uploads</h1>
       <div className="mt-3 mb-6 h-1.5 w-16 bg-zw-gold" />
       {error && <p className="mb-4 text-sm text-red-700">{error}</p>}
-      {notice && <p className="mb-4 text-sm" style={{ color: '#111111' }}>{notice}</p>}
+      {notice && <p className="mb-4 text-sm" style={{ color: '#f5f5f5' }}>{notice}</p>}
       {!token ? (
         <form onSubmit={signIn} className="max-w-md space-y-4 rounded-lg bg-white p-6 shadow" style={{ backgroundColor: '#ffffff', color: '#111111', borderTop: '4px solid #006400' }}>
           <p style={{ color: '#111111' }}>This page is separate from tutor and parent sign-in.</p>
@@ -152,7 +152,7 @@ export default function AdminPage() {
       ) : (
         <div>
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p style={{ color: '#111111' }}>Photos and videos waiting for a decision.</p>
+            <p style={{ color: '#d4d4d4' }}>Photos and videos waiting for a decision.</p>
             <button type="button" onClick={signOut} className="rounded-lg px-3 py-2 text-sm font-bold" style={{ color: '#006400' }}>Log out</button>
           </div>
           {items.length === 0 ? (

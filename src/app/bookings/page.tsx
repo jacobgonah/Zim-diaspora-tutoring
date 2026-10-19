@@ -97,22 +97,22 @@ export default function BookingsPage() {
   }
 
   if (!ready) {
-    return <p className="max-w-3xl mx-auto px-4 py-16" style={{ color: '#111111' }}>Checking your account...</p>
+    return <p className="max-w-3xl mx-auto px-4 py-16" style={{ color: '#f5f5f5' }}>Checking your account...</p>
   }
 
   const incoming = rows.filter((row) => tutorId !== null && row.tutor_id === tutorId)
   const outgoing = rows.filter((row) => row.parent_user_id === userId)
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8" style={{ color: '#1a1a1a' }}>
-      <h1 className="text-3xl font-bold" style={{ color: '#1a1a1a' }}>My bookings</h1>
+    <div className="max-w-3xl mx-auto px-4 py-8" style={{ color: '#f5f5f5' }}>
+      <h1 className="text-3xl font-bold" style={{ color: '#ffffff' }}>My bookings</h1>
       <div className="mt-3 mb-6 h-1.5 w-16 bg-zw-gold" />
       {error && <p className="mb-4 text-sm text-red-700">{error}</p>}
 
       {tutorId && <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3" style={{ color: '#1a1a1a' }}>Requests for you</h2>
+        <h2 className="text-xl font-semibold mb-3" style={{ color: '#ffffff' }}>Requests for you</h2>
         {incoming.length === 0 ? (
-          <p style={{ color: '#3f3f46' }}>No booking requests yet.</p>
+          <p style={{ color: '#a3a3a3' }}>No booking requests yet.</p>
         ) : (
           <ul className="space-y-3">
             {incoming.map((row) => (
@@ -139,9 +139,9 @@ export default function BookingsPage() {
       </section>}
 
       {!viewerIsTutor && <section>
-        <h2 className="text-xl font-semibold mb-3" style={{ color: '#1a1a1a' }}>Your lesson requests</h2>
+        <h2 className="text-xl font-semibold mb-3" style={{ color: '#ffffff' }}>Your lesson requests</h2>
         {outgoing.length === 0 ? (
-          <p style={{ color: '#3f3f46' }}>You have not requested a lesson yet. <Link href="/tutors" className="underline" style={{ color: '#006400' }}>Find Tutors</Link></p>
+          <p style={{ color: '#a3a3a3' }}>You have not requested a lesson yet. <Link href="/tutors" className="underline" style={{ color: '#FFD200' }}>Find Tutors</Link></p>
         ) : (
           <ul className="space-y-3">
             {outgoing.map((row) => {

@@ -138,14 +138,14 @@ export default function ParentProfilePage() {
   }
 
   if (!formReady) {
-    return <p className="max-w-2xl mx-auto px-4 py-16" style={{ color: '#111111' }}>Checking your account...</p>
+    return <p className="max-w-2xl mx-auto px-4 py-16" style={{ color: '#f5f5f5' }}>Checking your account...</p>
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10" style={{ color: '#1a1a1a' }}>
-      <h1 className="text-3xl font-bold" style={{ color: '#1a1a1a' }}>My profile</h1>
+    <div className="max-w-2xl mx-auto px-4 py-10" style={{ color: '#f5f5f5' }}>
+      <h1 className="text-3xl font-bold" style={{ color: '#ffffff' }}>My profile</h1>
       <div className="mt-3 mb-4 h-1.5 w-16 bg-zw-gold" />
-      <p className="mb-6" style={{ color: '#111111' }}>
+      <p className="mb-6" style={{ color: '#d4d4d4' }}>
         These details stay on your parent account. They are separate from tutor sign-up.
       </p>
       <form
@@ -176,7 +176,7 @@ export default function ParentProfilePage() {
         </button>
       </form>
       {error && <p className="mt-4 text-sm" style={{ color: '#d40000' }}>{error}</p>}
-      {notice && <p className="mt-4 text-sm" style={{ color: '#111111' }}>{notice}</p>}
+      {notice && <p className="mt-4 text-sm" style={{ color: '#f5f5f5' }}>{notice}</p>}
     </div>
   )
 }
