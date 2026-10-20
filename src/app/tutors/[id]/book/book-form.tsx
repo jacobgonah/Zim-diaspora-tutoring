@@ -121,7 +121,7 @@ export default function BookForm({ tutorId }: { tutorId: string }) {
   return (
     <div className="max-w-md mx-auto px-4 py-8" style={{ color: '#f5f5f5' }}>
       <h1 className="text-2xl font-bold mb-2" style={{ color: '#ffffff' }}>Request a lesson time</h1>
-      <div className="mb-4 h-1.5 w-16 bg-zw-gold" />
+      <div className="mb-4 h-1.5 w-16 bg-amber-400" />
       <p className="mb-4 text-sm" style={{ color: '#a3a3a3' }}>
         This request is tied to your signed-in account. The tutor accepts it, then WhatsApp opens for both of you.
       </p>

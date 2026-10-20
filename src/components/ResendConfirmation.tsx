@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { AuthRole } from '@/lib/auth-redirect'
+import { allowVerificationEmail } from '@/lib/email-verification-limit'
 
 export function ResendConfirmation({ email, role }: { email: string; role: AuthRole }) {
   const [sending, setSending] = useState(false)
@@ -13,6 +14,12 @@ export function ResendConfirmation({ email, role }: { email: string; role: AuthR
     setError(null)
     setNote(null)
     setSending(true)
+    const limit = await allowVerificationEmail(email)
+    if (!limit.ok) {
+      setSending(false)
+      setError(limit.message)
+      return
+    }
     const redirectTo = new URL('/auth/callback', window.location.origin)
     redirectTo.searchParams.set('role', role)
     const { error: resendError } = await supabase.auth.resend({

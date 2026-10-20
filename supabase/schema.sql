@@ -479,3 +479,56 @@ grant execute on function public.get_tutor(uuid) to anon, authenticated;
 grant execute on function public.accept_booking(uuid) to authenticated;
 grant execute on function public.booking_whatsapp_link(uuid) to authenticated;
 grant execute on function public.delete_user() to authenticated;
+
+-- Email verification limit: 3 confirmation emails per address per UTC day.
+-- The counter resets at midnight UTC. Run this section in the Supabase SQL editor.
+create table if not exists public.email_verification_sends (
+  id bigint generated always as identity primary key,
+  email text not null,
+  sent_on date not null,
+  sent_at timestamptz not null default now()
+);
+
+create index if not exists email_verification_sends_email_day_idx
+  on public.email_verification_sends (email, sent_on);
+
+alter table public.email_verification_sends enable row level security;
+revoke all on table public.email_verification_sends from public, anon, authenticated;
+
+create or replace function public.check_email_verification_limit(p_email text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  normalized text;
+  today date;
+  sent_count integer;
+begin
+  normalized := lower(trim(coalesce(p_email, '')));
+  if normalized = '' or position('@' in normalized) = 0 then
+    return false;
+  end if;
+
+  today := (timezone('utc', now()))::date;
+  perform pg_advisory_xact_lock(hashtext('email-verification:' || normalized));
+
+  select count(*) into sent_count
+  from public.email_verification_sends
+  where email = normalized
+    and sent_on = today;
+
+  if sent_count >= 3 then
+    return false;
+  end if;
+
+  insert into public.email_verification_sends (email, sent_on)
+  values (normalized, today);
+
+  return true;
+end;
+$$;
+
+revoke all on function public.check_email_verification_limit(text) from public;
+grant execute on function public.check_email_verification_limit(text) to anon, authenticated;

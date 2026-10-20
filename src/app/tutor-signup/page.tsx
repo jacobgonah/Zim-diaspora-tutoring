@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { AUTH_NEXT_KEY, AUTH_ROLE_KEY, destinationFor, safeNext } from '@/lib/auth-redirect'
 import { GENDERS, tutorGender } from '@/lib/gender'
 import { ResendConfirmation } from '@/components/ResendConfirmation'
+import { allowVerificationEmail } from '@/lib/email-verification-limit'
 
 const fieldStyle = {
   backgroundColor: '#09090b',
@@ -72,6 +73,13 @@ function TutorSignUpForm() {
     }
 
     setLoading(true)
+    const limit = await allowVerificationEmail(email)
+    if (!limit.ok) {
+      setLoading(false)
+      setError(limit.message)
+      return
+    }
+
     sessionStorage.setItem(AUTH_ROLE_KEY, 'tutor')
     if (next) sessionStorage.setItem(AUTH_NEXT_KEY, next)
     else sessionStorage.removeItem(AUTH_NEXT_KEY)

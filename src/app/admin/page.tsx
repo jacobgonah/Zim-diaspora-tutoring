@@ -135,7 +135,7 @@ export default function AdminPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8" style={{ color: '#f5f5f5' }}>
       <h1 className="text-3xl font-bold" style={{ color: '#ffffff' }}>Review uploads</h1>
-      <div className="mt-3 mb-6 h-1.5 w-16 bg-zw-gold" />
+      <div className="mt-3 mb-6 h-1.5 w-16 bg-amber-400" />
       {error && <p className="mb-4 text-sm text-red-700">{error}</p>}
       {notice && <p className="mb-4 text-sm" style={{ color: '#f5f5f5' }}>{notice}</p>}
       {!token ? (

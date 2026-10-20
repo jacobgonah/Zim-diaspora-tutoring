@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { AUTH_NEXT_KEY, AUTH_ROLE_KEY, destinationFor, safeNext } from '@/lib/auth-redirect'
 import { ResendConfirmation } from '@/components/ResendConfirmation'
+import { allowVerificationEmail } from '@/lib/email-verification-limit'
 import { useTutorSession } from '@/lib/use-tutor-session'
 
 const fieldStyle = {
@@ -62,6 +63,13 @@ function ParentSignUpForm() {
     }
 
     setLoading(true)
+    const limit = await allowVerificationEmail(email)
+    if (!limit.ok) {
+      setLoading(false)
+      setError(limit.message)
+      return
+    }
+
     sessionStorage.setItem(AUTH_ROLE_KEY, 'parent')
     if (next) sessionStorage.setItem(AUTH_NEXT_KEY, next)
     else sessionStorage.removeItem(AUTH_NEXT_KEY)

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -7,7 +7,7 @@ function formatLastSeen(dateStr: string) {
   const diffMins = Math.floor((Date.now() - date.getTime()) / 60000);
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-  return date.toLocaleDateString();
+  return date.toLocaleDateString("en-GB");
 }
 
 export function TutorStatus({ lastSeen }: { lastSeen: string | null }) {

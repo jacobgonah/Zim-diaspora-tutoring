@@ -517,7 +517,7 @@ export default function BecomeTutorPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8" style={{ color: '#f5f5f5' }}>
       <h1 className="text-3xl font-bold mb-2" style={{ color: '#ffffff' }}>My profile</h1>
-      <div className="mb-4 h-1.5 w-16 bg-zw-gold" />
+      <div className="mb-4 h-1.5 w-16 bg-amber-400" />
       <p className="mb-4" style={{ color: '#d4d4d4' }}>
         {profileId
           ? 'Everything saved on your tutor profile is here. Change a field, or add anything that is still empty, then save. A new photo or video stays hidden until it is approved.'

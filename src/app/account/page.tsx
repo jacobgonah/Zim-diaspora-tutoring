@@ -144,7 +144,7 @@ export default function ParentProfilePage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10" style={{ color: '#f5f5f5' }}>
       <h1 className="text-3xl font-bold" style={{ color: '#ffffff' }}>My profile</h1>
-      <div className="mt-3 mb-4 h-1.5 w-16 bg-zw-gold" />
+      <div className="mt-3 mb-4 h-1.5 w-16 bg-amber-400" />
       <p className="mb-6" style={{ color: '#d4d4d4' }}>
         These details stay on your parent account. They are separate from tutor sign-up.
       </p>
