@@ -1,4 +1,4 @@
-﻿import { TutorHeartbeat } from "@/components/TutorHeartbeat";
+import { TutorHeartbeat } from "@/components/TutorHeartbeat";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
@@ -79,7 +79,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               This is a listings and booking site only. We do not check identity or criminal records. Parents must make their own checks. Lessons and payments happen off-platform.
             </p>
             <nav className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-neutral-300" style={{ color: "#d4d4d4" }}>
-              <Link href="/privacy" className="underline decoration-neutral-600 underline-offset-4 transition-colors hover:text-amber-400" style={{}}>Privacy Policy</Link>
+              <Link href="/contact" className="hover:underline">Contact Us</Link>
+          {" · "}
+          <Link href="/privacy" className="underline decoration-neutral-600 underline-offset-4 transition-colors hover:text-amber-400" style={{}}>Privacy Policy</Link>
               <Link href="/terms" className="underline decoration-neutral-600 underline-offset-4 transition-colors hover:text-amber-400" style={{}}>Terms</Link>
             </nav>
             <p className="mt-6 text-[11px] text-neutral-500" style={{ color: "#737373" }}>&copy; <CurrentYear /> Zim Diaspora Tutoring.</p>
