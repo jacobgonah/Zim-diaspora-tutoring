@@ -128,16 +128,38 @@ export default function TutorsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tutors.map((tutor) => (
-            <Link key={tutor.id} href={`/tutors/${tutor.id}`} className="group block rounded-xl border border-neutral-800 border-b-4 border-b-amber-400 bg-neutral-900 p-5 shadow-lg shadow-black/30 transition hover:-translate-y-0.5 hover:border-neutral-700 hover:border-b-amber-300 hover:shadow-black/60 focus:outline-none focus:ring-2 focus:ring-amber-400" style={{ backgroundColor: '#171717', color: '#e5e5e5' }}>
+          {tutors.map((tutor) => {
+            const profileHref = `/tutors/${tutor.id}`
+            const href = viewerReady && !userId ? `/parent-signup?next=${encodeURIComponent(profileHref)}` : profileHref
+            const hidePhoto = (!viewerReady || !userId) && !!tutor.photo_url
+            return (
+            <Link key={tutor.id} href={href} className="group block rounded-xl border border-neutral-800 border-b-4 border-b-amber-400 bg-neutral-900 p-5 shadow-lg shadow-black/30 transition hover:-translate-y-0.5 hover:border-neutral-700 hover:border-b-amber-300 hover:shadow-black/60 focus:outline-none focus:ring-2 focus:ring-amber-400" style={{ backgroundColor: '#171717', color: '#e5e5e5' }}>
+              {tutor.photo_url && (
+                <div className="relative mb-4 overflow-hidden rounded-lg">
+                  <TutorPhoto
+                    photoUrl={tutor.photo_url}
+                    gender={tutor.gender}
+                    initial={tutor.surname?.[0] || '?'}
+                    alt=""
+                    className={`h-44 w-full rounded-lg text-3xl ${hidePhoto ? 'blur-md' : ''}`}
+                  />
+                  {hidePhoto && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                      <span className="rounded-full bg-neutral-950/80 px-3 py-1 text-sm font-medium text-white">Sign up to view</span>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex items-start gap-3">
-                <TutorPhoto
-                  photoUrl={tutor.photo_url}
-                  gender={tutor.gender}
-                  initial={tutor.surname?.[0] || '?'}
-                  alt=""
-                  className="h-16 w-16 shrink-0 rounded-full text-xl ring-2 ring-emerald-800"
-                />
+                {!tutor.photo_url && (
+                  <TutorPhoto
+                    photoUrl={tutor.photo_url}
+                    gender={tutor.gender}
+                    initial={tutor.surname?.[0] || '?'}
+                    alt=""
+                    className="h-16 w-16 shrink-0 rounded-full text-xl ring-2 ring-emerald-800"
+                  />
+                )}
                 <div>
                   <h3 className="font-semibold transition-colors group-hover:text-amber-400" style={{}}>{[tutor.title, tutor.surname].filter(Boolean).join(' ')}</h3>
                   <div className="mt-1"><TutorStatus lastSeen={(tutor as Tutor & { last_seen?: string | null }).last_seen ?? null} /></div>
@@ -147,10 +169,14 @@ export default function TutorsPage() {
                   {tutor.no_show_count > 0 && (
                     <p className="mt-2 inline-block rounded-full border border-red-500/40 bg-red-950/40 px-2 py-0.5 text-xs font-medium text-red-400">No-shows: {tutor.no_show_count}</p>
                   )}
+                  {viewerReady && !userId && !tutor.photo_url && (
+                    <p className="mt-3 text-sm font-medium text-amber-400">Sign up to view</p>
+                  )}
                 </div>
               </div>
             </Link>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
